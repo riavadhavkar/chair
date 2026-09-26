@@ -89,6 +89,13 @@ struct CollectionView: View {
     private var grid: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                if model.collectionState == .loaded {
+                    Text(summary)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 Picker("filter", selection: $filter) {
                     ForEach(CollectionFilter.allCases) { Text($0.rawValue).tag($0) }
                 }
@@ -97,19 +104,10 @@ struct CollectionView: View {
                 content
             }
             .padding(.horizontal, 20)
+            .padding(.top, 8)
             .padding(.bottom, 24)
         }
         .background(.background.secondary)
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if model.collectionState == .loaded {
-                Text(summary)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 8)
-            }
-        }
         .refreshable { await model.loadCollection() }
     }
 

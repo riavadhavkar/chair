@@ -42,7 +42,7 @@ final class MockChairService: ChairService {
         ]
     }
 
-    private static func date(_ day: String) -> Date? {
+    private nonisolated static func date(_ day: String) -> Date? {
         try? Date("\(day)T16:00:00Z", strategy: .iso8601)
     }
 
