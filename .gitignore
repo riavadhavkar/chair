@@ -1,0 +1,17 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+
+# Secrets (never commit API keys)
+Secrets.xcconfig
+backend/.env
+
+# Node
+backend/node_modules/
+backend/npm-debug.log*
+
+# macOS
+.DS_Store
