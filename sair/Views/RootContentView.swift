@@ -31,6 +31,11 @@ struct RootContentView: View {
                 } else {
                     NotchPillView(status: trackerModel.status, isStale: trackerModel.isStale)
                         .glassEffect(.regular.interactive(), in: .capsule)
+                        .overlay {
+                            // HIG "Depth": a hairline specular edge is what
+                            // reads as glass rather than a flat gray pill.
+                            Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
+                        }
                         .glassEffectID("shell", in: glassNamespace)
                         .transition(.opacity)
                         .onTapGesture { expand() }
@@ -40,14 +45,21 @@ struct RootContentView: View {
             }
         }
         .onHover { isHovering in
-            guard isHovering, !windowState.isExpanded else {
-                pendingHoverTask?.cancel()
-                return
-            }
-            pendingHoverTask = Task {
-                try? await Task.sleep(for: .milliseconds(500))
-                guard !Task.isCancelled else { return }
-                expand()
+            pendingHoverTask?.cancel()
+            if isHovering {
+                guard !windowState.isExpanded else { return }
+                pendingHoverTask = Task {
+                    try? await Task.sleep(for: .milliseconds(500))
+                    guard !Task.isCancelled else { return }
+                    expand()
+                }
+            } else {
+                guard windowState.isExpanded else { return }
+                pendingHoverTask = Task {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    guard !Task.isCancelled else { return }
+                    collapse()
+                }
             }
         }
         .task {
@@ -57,5 +69,9 @@ struct RootContentView: View {
 
     private func expand() {
         withAnimation(transitionAnimation) { windowState.isExpanded = true }
+    }
+
+    private func collapse() {
+        withAnimation(transitionAnimation) { windowState.isExpanded = false }
     }
 }

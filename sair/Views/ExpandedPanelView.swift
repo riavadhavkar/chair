@@ -34,6 +34,10 @@ struct ExpandedPanelView: View {
                 .padding(.horizontal, 14)
                 .frame(height: headerHeight)
                 .glassEffect(.regular, in: .rect(cornerRadius: 16, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
+                }
                 .glassEffectID("shell", in: glassNamespace)
                 .padding(.horizontal, 6)
                 .padding(.top, 6)

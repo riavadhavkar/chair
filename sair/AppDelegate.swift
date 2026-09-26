@@ -41,10 +41,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         pillWindow.isOpaque = false
         pillWindow.backgroundColor = .clear
         pillWindow.hasShadow = false
-        pillWindow.level = .floating
+        // Above the system menu bar's own level (mainMenu = 24), not just
+        // .floating (which sits below it). At .floating, a system menu bar
+        // configured to auto-hide/reveal slides down *on top of* this
+        // window the moment the pointer nears the top edge to hover the
+        // pill — which is exactly what hovering the pill does — so the
+        // pill visibly vanishes behind it. Real "lives in the notch" apps
+        // (Boring Notch, NotchNook, etc.) all sit above the menu bar level
+        // for this reason.
+        pillWindow.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         pillWindow.ignoresMouseEvents = false
         pillWindow.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         pillWindow.isReleasedWhenClosed = false
+        pillWindow.isMovable = false
+        // Agent (LSUIElement) apps are never "key/main" in the normal
+        // sense; be explicit that losing app-active status must never hide
+        // this window, since that would look identical to the menu-bar
+        // z-order bug above.
+        pillWindow.hidesOnDeactivate = false
 
         pillWindow.contentView = NSHostingView(rootView: RootContentView(windowState: windowState))
         pillWindow.orderFrontRegardless()
@@ -62,20 +76,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         positionWindow(size: window?.frame.size ?? WindowMetrics.idleSize)
     }
 
-    /// Horizontally centers the pill under the notch (or under the screen's
-    /// center on non-notch Macs), anchored just below the menu bar row so it
-    /// always sits in real, guaranteed-visible desktop space. Note this
-    /// deliberately does NOT reuse the notch row's own vertical band
-    /// (auxiliaryTopLeftArea/RightArea's y-range): that band is exactly as
-    /// tall as the menu bar and centering a window on the notch horizontally
-    /// while placed within that row would put most of its width directly
-    /// over the physical notch cutout, which has zero display pixels
-    /// underneath — the window would be genuinely invisible there, not just
-    /// obscured. Sitting just below the menu bar keeps the "hangs from the
-    /// notch" look without ever rendering into that dead zone. Because the
-    /// vertical anchor is always (visibleFrame.maxY - height), the window's
-    /// top edge stays fixed across size changes, so expanding grows purely
-    /// downward.
+    /// Horizontally centers the pill on the notch (or on the screen's
+    /// center on non-notch Macs), anchored with its TOP edge at the
+    /// screen's true physical top (`screen.frame.maxY`) — i.e. the notch's
+    /// own row — rather than below the menu bar. Sitting below the menu bar
+    /// left a visible gap that (combined with the old sub-menu-bar window
+    /// level) is exactly where an auto-revealing menu bar would slide down
+    /// on top of the pill on hover. Anchoring at the physical top and
+    /// rendering above the menu bar's level instead makes the pill genuinely
+    /// look like it grows out of the notch. Because the vertical anchor is
+    /// always (frame.maxY - height), the window's top edge stays fixed
+    /// across size changes, so expanding grows purely downward.
     ///
     /// The frame change itself is applied instantly (not Core Animation
     /// -animated via `window.animator()`): animating an NSHostingView-backed
@@ -94,7 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             originX = screen.frame.midX - size.width / 2
         }
-        let originY = screen.visibleFrame.maxY - size.height - 6
+        let originY = screen.frame.maxY - size.height
         let targetRect = NSRect(origin: NSPoint(x: originX, y: originY), size: size)
 
         window.setFrame(targetRect, display: true)
