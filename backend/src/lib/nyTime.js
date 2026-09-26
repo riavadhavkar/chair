@@ -38,15 +38,9 @@ function offsetMinutes(date) {
   return sign * (Number(match[2]) * 60 + Number(match[3]));
 }
 
-function formatClock(date) {
-  return new Intl.DateTimeFormat("en-US", { timeZone: ZONE, hour: "numeric", minute: "2-digit" })
-    .format(date)
-    .replace(":00", "");
-}
-
 /// ISO-8601 without fractional seconds, so Swift's `.iso8601` decoder accepts it.
 function isoSeconds(date) {
   return date ? date.toISOString().replace(/\.\d{3}Z$/, "Z") : null;
 }
 
-module.exports = { nyLocalToDate, nowAsNyFloating, formatClock, isoSeconds };
+module.exports = { nyLocalToDate, nowAsNyFloating, isoSeconds };

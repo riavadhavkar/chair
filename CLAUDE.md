@@ -1,18 +1,24 @@
 # Set Watch
 
-An iPhone app that maps where NYC film/TV shoots happen, from the city's public film permits. People collect the most-filmed blocks by physically checking in at them, and each spot shows how many people have been there.
+An iPhone app that maps NYC film/TV shoots from the city's public film permits. People collect the most-filmed blocks by physically checking in, and each block shows how many people have been there.
 
-**Read `docs/IOS_APP_BRIEF.md` first.** It is the source of truth for screens, data model, API and look & feel. The design canvas is "Set Watch iPhone app": https://claude.ai/artifact/Mq6WmAvEq7i7pErSihnP17 (the owner shares it).
+`docs/IOS_APP_BRIEF.md` is the product/design spec. The design canvas is "Set Watch iPhone app": https://claude.ai/artifact/Mq6WmAvEq7i7pErSihnP17 (the owner shares it).
 
-## Status
+## Layout
 
-- `sair/` + `sair.xcodeproj` is the **retired macOS notch app**. Don't extend it. Delete it once the new iOS target builds.
-- `backend/` (Node/Express) still serves the old notch API (`/nearby`, `/ask`, `/go/:id`). It will be reworked to the API in the brief. Until then the app runs on `MockSetWatchService`.
+- `SetWatch/`: the app. Xcode uses a synchronized folder, so new `.swift` files need no project edits.
+  - `Models/Models.swift`: `Shoot`, `Spot` (with the `vibe` label), `CheckInResult`, `Walk`
+  - `Models/AppModel.swift`: shared observable state for all tabs, plus the check-in gate (`availability(for:)`)
+  - `Services/`: `SetWatchService` protocol; `MockSetWatchService` (canvas data) and `RemoteSetWatchService` (HTTP); `LocationModel` (CLLocationUpdate); `NarrationPlayer` (ElevenLabs MP3 with a device-voice fallback)
+  - `Views/`: `TodayView`, `WalkView`, `CollectionView` (+ `CollectionLayout` sorting), `SpotSheet`, `Components/SpotBadge`
+  - `Config/AppConfig.swift`: reads `SetWatch.xcconfig` → `SetWatchInfo.plist` (mock flag, backend URL); anonymous `DeviceID`
+- `backend/`: Node/Express + MongoDB. `npm test` must pass. API contract is in `backend/README.md`.
 
 ## Rules
 
-- SwiftUI + MapKit + CoreLocation, iOS 26, no third-party packages.
-- Permits have no show/movie titles. Never display or imply one (title matching is a future improvement).
-- No fabricated visitor counts outside mock data.
-- Respect Reduce Motion and Dynamic Type. Liquid Glass only for floating chrome.
-- Secrets go in the gitignored `Secrets.xcconfig`. Never commit keys.
+- SwiftUI + MapKit + CoreLocation, iOS 26, no third-party packages. The project defaults to MainActor isolation; mark plain data types `nonisolated`.
+- Permits have no show/movie titles. Never display, guess or generate one (in the app or in Gemini prompts).
+- No fabricated visitor counts outside `MockSetWatchService`.
+- Collection order: sections by neighborhood; inside each, collected first, then missing, both sorted by name.
+- Respect Reduce Motion and Dynamic Type. Liquid Glass only for floating chrome (the tab bar, the top chips).
+- The app holds no API keys. Keys live in `backend/.env`. Never commit `.env` or `Secrets.xcconfig`.

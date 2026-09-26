@@ -1,5 +1,7 @@
 # Set Watch — iPhone app build brief
 
+> **Status:** implemented in `SetWatch/` and `backend/`. This brief is the spec, and the code follows it.
+
 Set Watch shows where movies and TV are filming in NYC today, based on the city's public film permits. It also turns the most-filmed blocks into spots people can collect by physically visiting them. Every spot shows how many people have been there, so a visit feels either validated ("a classic") or like a find ("secret spot").
 
 The design reference is the **"Set Watch iPhone app"** canvas (https://claude.ai/artifact/Mq6WmAvEq7i7pErSihnP17, private until the owner shares it). Match its layout, spacing and colors. The collection screen follows the same pattern as Apple's pins sample app (WWDC26 session 382).
@@ -23,7 +25,7 @@ protocol SetWatchService {
     func filmingToday(near: CLLocationCoordinate2D) async throws -> [Shoot]
     func collection() async throws -> [Spot]
     func spot(id: String) async throws -> Spot
-    func checkIn(spotID: String, deviceID: UUID, at: CLLocationCoordinate2D) async throws -> CheckInResult
+    func checkIn(spotID: String, at: CLLocationCoordinate2D) async throws -> CheckInResult   // the service knows the device id
     func walk(from: CLLocationCoordinate2D, minutes: Int) async throws -> Walk
     func narration(for walk: Walk) async throws -> Data   // audio/mpeg
 }
@@ -64,14 +66,15 @@ Opens from the map, a walk stop, or the collection grid. It is a `.sheet` with m
 
 ### 3 · Walk ("near me now")
 
-- A "Plan a walk" button with a 15 / 30 / 45 min picker. The server has Gemini pick 4–6 filmed blocks near the user and order them into a loop.
+- A "Plan a walk" button with a 15 / 30 / 45 min picker. The server picks the most-filmed blocks within reach (3 / 5 / 6 stops) and orders them into a loop, and Gemini writes the spoken narration.
 - A map with the walking route as a line (use `MKDirections` walking routes between the stops) and numbered stop markers.
 - A card containing:
   - "30-min walk · 5 filmed blocks"
   - a **Listen** button that plays the ElevenLabs narration with `AVAudioPlayer`, showing a small animated waveform while playing
   - the stop list, each stop with "filmed N times since 2012"
 - Tapping a stop opens its Spot sheet, so you can check in on the walk.
-- Footer: "Route by Gemini from NYC film permits".
+- Footer: "Stops from NYC film permits · narration written by Gemini".
+- If ElevenLabs audio isn't available, Listen falls back to the device voice (AVSpeechSynthesizer), so it always works in a demo.
 
 ### 4 · Collection
 
@@ -99,7 +102,7 @@ Never show made-up counts in release builds. Mock data may use placeholder numbe
 ## Check-in rules
 
 - The client checks the distance first: `CLLocation.distance(from:) <= 100` and `horizontalAccuracy <= 65`.
-- The server checks the same distance again and rejects duplicates. The rule is one check-in per device per spot.
+- The server checks the distance again, with 150 m of slack for GPS drift, and rejects duplicates. The rule is one check-in per device per spot.
 - Only the device id, spot id and time are stored, never a location trail.
 
 ---
@@ -124,8 +127,8 @@ struct Spot: Codable, Identifiable {          // a street block, aggregated from
     let name: String                          // "Perry St"
     let crossStreets: String?                 // "Bleecker St – W 4 St"
     let neighborhood: String                  // "West Village"
-    let lat: Double
-    let lon: Double
+    let lat: Double?                          // nil if the block couldn't be geocoded
+    let lon: Double?
     let timesFilmed: Int
     let lastFilmed: Date?
     let lastCategory: String?
@@ -171,8 +174,8 @@ Base URL comes from `Secrets.xcconfig` (`SETWATCH_BACKEND_BASE_URL`). Dates are 
 | GET | `/today` | `lat, lon, radius` | `[Shoot]` |
 | GET | `/collection` | `deviceID` | `[Spot]` |
 | GET | `/spots/:id` | `deviceID` | `Spot` |
-| POST | `/checkins` | `{ spotID, deviceID, lat, lon }` | `CheckInResult` (409 = already collected, 422 = too far) |
-| POST | `/walks` | `{ lat, lon, minutes }` | `Walk` |
+| POST | `/checkins` | `{ spotID, deviceID, lat, lon }` | `CheckInResult` (201 new, 409 already collected with the same body, 422 `{ error, distanceMeters }` = too far) |
+| POST | `/walks` | `{ lat, lon, minutes, deviceID }` | `Walk` (404 = not enough filmed blocks nearby) |
 | GET | `/walks/:id/narration` | — | `audio/mpeg` |
 
 All API keys (Gemini, ElevenLabs, MongoDB) stay on the server. The app holds none.

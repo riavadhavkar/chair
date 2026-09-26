@@ -1,17 +1,16 @@
 require("dotenv").config();
-const express = require("express");
-const { router: nearbyRouter } = require("./routes/nearby");
-const { router: askRouter } = require("./routes/ask");
-const { router: goRouter } = require("./routes/go");
-
-const app = express();
-
-app.get("/health", (_req, res) => res.json({ ok: true }));
-app.use(nearbyRouter);
-app.use(askRouter);
-app.use(goRouter);
+const { createApp } = require("./app");
+const { createStore } = require("./store");
 
 const port = process.env.PORT || 8080;
-app.listen(port, () => {
-  console.log(`Set Watch backend listening on port ${port}`);
-});
+
+createStore()
+  .then((store) => {
+    createApp({ store }).listen(port, () => {
+      console.log(`Set Watch backend listening on port ${port} (${store.kind} store)`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to start:", error);
+    process.exit(1);
+  });

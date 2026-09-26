@@ -1,6 +1,4 @@
 const EARTH_RADIUS_METERS = 6371000;
-// A Manhattan north–south block is ~80 m; close enough for "N blocks away" copy.
-const METERS_PER_BLOCK = 80;
 
 function distanceMeters(a, b) {
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -10,12 +8,15 @@ function distanceMeters(a, b) {
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(h));
 }
 
-function blocksAway(meters) {
-  return Math.max(1, Math.round(meters / METERS_PER_BLOCK));
+/// Lat/lon deltas that cover `meters` around `lat` — a cheap prefilter before exact distance.
+function boundingBox({ lat, lon }, meters) {
+  const dLat = meters / 111320;
+  const dLon = meters / (111320 * Math.cos((lat * Math.PI) / 180));
+  return { minLat: lat - dLat, maxLat: lat + dLat, minLon: lon - dLon, maxLon: lon + dLon };
 }
 
-function appleMapsWalkingURL({ lat, lon }) {
-  return `https://maps.apple.com/?daddr=${lat},${lon}&dirflg=w`;
+function hasCoordinates(point) {
+  return Number.isFinite(point?.lat) && Number.isFinite(point?.lon);
 }
 
-module.exports = { distanceMeters, blocksAway, appleMapsWalkingURL };
+module.exports = { distanceMeters, boundingBox, hasCoordinates };

@@ -1,16 +1,17 @@
 {
   "name": "set-watch-backend",
-  "version": "2.0.0",
-  "description": "NYC film permits + TMDB + Gemini -> simplified JSON for the Set Watch notch app",
+  "version": "3.0.0",
+  "description": "NYC film permits -> collectible filmed blocks, check-ins and walks for the Set Watch iPhone app",
   "main": "src/server.js",
   "type": "commonjs",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "prefetch": "node src/scripts/prefetch.js"
+    "import": "node src/scripts/importPermits.js",
+    "test": "node --test"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

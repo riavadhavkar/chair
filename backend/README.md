@@ -1,103 +1,69 @@
-# Set Watch Backend
+# Set Watch backend
 
-Turns NYC's public film permits into "what's filming near me right now" JSON for
-the Set Watch notch app (and the stretch iMessage / voice-call front-ends).
+Turns NYC's public film permits into collectible street blocks, and serves the Set Watch iPhone app.
 
 ```
-NYC Open Data film permits ─┐
-                            ├─ geocode first held block (NYC GeoSearch)
-config/titleHints.json ─────┼─ curated title for this permit id (if any)
-                            ├─ TMDB exact-title match → poster, synopsis, genres, cast
-                            ├─ Gemini → one plain sentence (template fallback)
-                            └─ cache (MongoDB Atlas, or in-memory) → /nearby, /ask, /go/:id
+NYC Open Data film permits (2012 → today)
+        │  npm run import (once)
+        ▼
+one spot per street block ── times filmed, last shoot, neighborhood
+        │  top 12 blocks per neighborhood = the collectible set, geocoded
+        ▼
+MongoDB Atlas (spots, checkins, walks)  ◀── GET /today reads today's permits live
+        │
+        ├─ POST /checkins   GPS-checked, one per device per spot → shared visitor count
+        ├─ POST /walks      nearby most-filmed blocks, ordered as a loop; Gemini writes the narration
+        └─ GET  /walks/:id/narration   ElevenLabs MP3
 ```
 
-## Setup
+## Run it
 
 ```bash
 cd backend
 npm install
-cp .env.example .env   # every key is optional; see below
+cp .env.example .env     # fill in what you have; everything is optional
+npm run import           # Manhattan since 2012 → data/spots.json (+ MongoDB if configured)
 npm run dev
-npm run prefetch       # warm the cache before a demo
+npm test
 ```
 
-## Endpoints
+Without `MONGODB_URI` the server uses an in-memory store seeded from `data/spots.json`, and check-ins are lost on restart. Use Atlas for the demo.
 
-| Route | What it returns |
-|---|---|
-| `GET /health` | `{ ok: true }` |
-| `GET /nearby?lat=&lon=&radius=` | `{ generatedAt, center, radiusMeters, productions: [...] }`: TMDB-matched shoots first, then nearest first. Omit `lat`/`lon` to use `DEFAULT_LAT`/`DEFAULT_LON`. |
-| `POST /ask` `{ text, lat?, lon? }` | `{ reply, production }`: one text answer. The Photon iMessage handler and the ElevenLabs call script call this. Neighborhood names in `text` ("SoHo", "Chelsea"…) set the center. |
-| `GET /go/:id` | A tiny HTML page with Open Graph tags (Mapbox static map) that forwards to Apple Maps walking directions, so a link sent in iMessage renders as a map card. |
+## API
 
-A production looks like:
+Dates are ISO-8601 without fractional seconds. `deviceID` is the app's anonymous per-install UUID.
 
-```json
-{
-  "id": "812345",
-  "category": "Television",
-  "subcategory": "Episodic series",
-  "borough": "Manhattan",
-  "startsAt": "2026-09-26T11:00:00Z",
-  "endsAt": "2026-09-27T01:00:00Z",
-  "location": { "raw": "WEST 20 STREET between 5 AVENUE and 6 AVENUE", "display": "W 20 St between 5 & 6 Av", "lat": 40.74, "lon": -73.99, "precision": "intersection" },
-  "titleHint": "The Night Desk",
-  "match": { "source": "tmdb", "tmdbId": 1, "mediaType": "tv", "title": "…", "year": 2025, "overview": "…", "genres": ["Drama"], "cast": ["…"], "posterURL": "https://image.tmdb.org/…", "backdropURL": null },
-  "summary": "The Night Desk is filming on W 20 St between 5 & 6 Av until 9 PM.",
-  "directionsURL": "https://maps.apple.com/?daddr=40.74,-73.99&dirflg=w",
-  "distanceMeters": 160,
-  "shareURL": "https://yourdomain.tech/go/812345"
-}
-```
+| Method | Path | Input | Output |
+|---|---|---|---|
+| GET | `/health` | — | `{ ok, store }` |
+| GET | `/today` | `lat, lon, radius` (m, default 1600) | `[Shoot]`, nearest first |
+| GET | `/collection` | `deviceID` | `[Spot]`: the collectible set, plus any other block this device checked in at |
+| GET | `/spots/:id` | `deviceID` | `Spot` |
+| POST | `/checkins` | `{ spotID, deviceID, lat, lon }` | `201` new / `409` already collected, both with `{ spotID, visitorCount, collectedAt }`. `422 { error: "too_far", distanceMeters }` |
+| POST | `/walks` | `{ lat, lon, minutes: 15\|30\|45, deviceID? }` | `{ id, minutes, stops: [Spot], narrationText }`. `404` if there are fewer than 2 filmed blocks nearby |
+| GET | `/walks/:id/narration` | — | `audio/mpeg`. `503` without an ElevenLabs key; the app falls back to the device voice |
 
-`match` is `null` when there's no confident TMDB match. `titleHint` is `null` when nobody curated a title.
+`Shoot`: `{ id, spotID, block, category, subcategory, startsAt, endsAt, lat, lon }`
 
-## The permit dataset has no title column
+`Spot`: `{ id, name, crossStreets, neighborhood, lat, lon, timesFilmed, lastFilmed, lastCategory, visitorCount, collectedAt }`
 
-The Film Permits dataset (`tg4x-b46p`) lists event id, times, category, subcategory,
-borough, zip codes and the held street blocks. It **does not include the production's name.**
-So titles come from `src/config/titleHints.json`, which you fill in by hand for the demo:
+## How the pieces work
 
-```json
-{ "byEventId": { "812345": { "title": "Exact TMDB Title", "source": "https://link-to-public-report" } } }
-```
+- **Spots.** A permit's `parkingheld` field lists the street blocks it holds ("W 20 St between 5 Av and 6 Av, …"). Each block is one spot, identified by a hash of its street and sorted cross streets. `timesFilmed` counts permits that held the block. The neighborhood comes from the permit's ZIP (`src/config/neighborhoods.js`, Manhattan only).
+- **Collectible set.** Each neighborhood's 12 most-filmed blocks, at most one per street (`SPOTS_PER_NEIGHBORHOOD`).
+- **Geocoding.** A block's point is the midpoint of its two end intersections. With `NYC_GEOCLIENT_KEY` (free, api-portal.nyc.gov) this uses NYC Geoclient's intersection endpoint; otherwise it uses the keyless GeoSearch, which handles intersections less reliably. **Get the Geoclient key before the demo.**
+- **Check-ins.** The server allows 150 m (`CHECKIN_RADIUS_METERS`); the app requires 100 m and a fix accurate to 65 m. It stores only `{ spotID, deviceID, at }`. Device ids can be spoofed, so treat counts as a fun signal, not proof.
+- **Walks.** The server picks the most-filmed blocks within reach (15 → 3 stops, 30 → 5, 45 → 6) and orders them as a nearest-neighbor loop. Gemini writes the spoken narration from permit facts only, and is told never to name a show. Without `GEMINI_API_KEY`, a template narration is used.
 
-Only put in titles you can source publicly (press or the production's own announcement).
-TMDB only counts **exact** normalized title matches, because a fuzzy match would put the
-wrong poster on a working title. Everything else shows up as the permit-only fallback card,
-which is why that card has to look intentional.
+## Deploy (DigitalOcean App Platform)
 
-## Environment variables
-
-All optional. Without them the service still runs and gets less rich:
-
-| Variable | Without it |
-|---|---|
-| `TMDB_READ_TOKEN` or `TMDB_API_KEY` | No posters/synopses; every card is the permit-only fallback |
-| `GEMINI_API_KEY` | `summary` uses a template sentence |
-| `MONGODB_URI` | Cache is in-memory only (lost on restart) |
-| `NYC_OPEN_DATA_APP_TOKEN` | Lower Socrata rate limit |
-| `PUBLIC_BASE_URL` | `shareURL` is `null` |
-| `MAPBOX_ACCESS_TOKEN` | `/go/:id` has no preview image |
-| `DEFAULT_LAT` / `DEFAULT_LON` / `DEFAULT_LABEL` / `DEMO_BOROUGH` / `DEFAULT_RADIUS_METERS` | Chelsea, Manhattan, 1.5 km |
-
-TMDB requires attribution: show "This product uses the TMDB API but is not endorsed or certified by TMDB." in the app's about/credits.
+1. Create an app from this repo with source directory `backend/` (the Dockerfile works as-is), or run `npm start` on a Droplet.
+2. Set the env vars from `.env.example`, including `MONGODB_URI` from Atlas. Allow DigitalOcean's egress IPs in Atlas network access.
+3. Run the import once with the same `.env` (locally is fine, as long as it writes to the same Atlas database).
+4. Point your `.tech` domain at the app, then set `SETWATCH_BACKEND_BASE_URL` in the app's `Secrets.xcconfig`.
 
 ## Known limitations
 
-- **Location precision varies.** Only the first held block is geocoded (its first cross
-  street, else the street). Multi-block permits show one point. Permits that can't be
-  geocoded are dropped from `/nearby`.
-- **Single borough** (`DEMO_BOROUGH`), per the MVP scope.
-- Verify the dataset URL/columns and the GeoSearch endpoint before deploying. Both are
-  public services that can change.
-
-## Stretch front-ends (not built yet)
-
-- **Photon iMessage bot:** a separate small Node process scaffolded with
-  `npm create spectrum-project@latest -- --yes --platforms imessage --projectId <id>`.
-  Its message handler should `POST /ask` with the inbound text and send back `reply`
-  plus `production.shareURL`. Keep its `.env` out of git.
-- **ElevenLabs + Twilio call:** the call server should build the agent's first message
-  from `POST /ask` (or `GET /nearby`). Only call a number its owner opted in.
+- The permits don't say which show or movie was filming, and the app never guesses. Title matching is a future improvement.
+- Only Manhattan has neighborhood names; other boroughs group under the borough name.
+- "Today" only shows permits whose first held block can be geocoded.
