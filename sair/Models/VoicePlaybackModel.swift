@@ -21,20 +21,34 @@ final class VoicePlaybackModel: NSObject {
         case failed
     }
 
-    private(set) var state: State
+    private(set) var state: State = .idle
+
+    // Plain immutable value (not the @Observable-tracked `state`), so it's
+    // safe to set from the nonisolated init below.
+    private let isAvailable: Bool
 
     private let client: ElevenLabsClient
     private var player: AVAudioPlayer?
     private var cache: [String: Data] = [:]
 
-    init(client: ElevenLabsClient = ElevenLabsClient()) {
+    // Safe nonisolated: only assigns plain values and calls NSObject's
+    // (nonisolated) super.init() — mutating the MainActor-isolated `state`
+    // here (rather than via `isAvailable`) would not compile.
+    nonisolated init(client: ElevenLabsClient = ElevenLabsClient()) {
         self.client = client
-        state = client.apiKey == nil ? .unavailable : .idle
+        self.isAvailable = client.apiKey != nil
         super.init()
     }
 
+    /// What the UI should actually show: `.unavailable` overrides whatever
+    /// `state` holds, since a missing key makes the rest of the state
+    /// machine moot.
+    var displayState: State {
+        isAvailable ? state : .unavailable
+    }
+
     func toggle(text: String) {
-        guard state != .unavailable else { return }
+        guard isAvailable else { return }
         if state == .playing {
             stop()
         } else {

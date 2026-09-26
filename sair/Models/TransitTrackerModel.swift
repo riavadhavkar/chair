@@ -28,7 +28,10 @@ final class TransitTrackerModel {
     private let client: TransitAPIClient
     private var pollTask: Task<Void, Never>?
 
-    init(
+    // Only assigns plain value types, so this is safe to call from a
+    // nonisolated context (e.g. a View's synthesized init evaluating a
+    // `@State` property's default value) without hopping to the main actor.
+    nonisolated init(
         line: String = "L",
         stationID: String = "L03",
         stationName: String = "14 St",

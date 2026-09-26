@@ -14,8 +14,14 @@ enum ElevenLabsError: Error {
 /// Text-to-speech REST call for the delay-summary voice button. Stock
 /// URLSession + async/await only, per project convention.
 struct ElevenLabsClient {
-    var apiKey: String? = Secrets.elevenLabsAPIKey
-    var voiceID: String = "21m00Tcm4TlvDq8ikWAM" // ElevenLabs' default "Rachel" voice
+    var apiKey: String?
+    var voiceID: String
+
+    // Explicit nonisolated init — see TransitAPIClient's init for why.
+    nonisolated init(apiKey: String? = Secrets.elevenLabsAPIKey, voiceID: String = "21m00Tcm4TlvDq8ikWAM") {
+        self.apiKey = apiKey
+        self.voiceID = voiceID
+    }
 
     private let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral

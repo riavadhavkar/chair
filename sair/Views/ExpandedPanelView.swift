@@ -5,43 +5,19 @@
 
 import SwiftUI
 
+/// Expanded content only: schematic tracker or literal map, delay summary
+/// + voice button, and offline/stale/loading states. The header/chrome
+/// (line dot, title, map-toggle and collapse buttons) lives in
+/// RootContentView's persistent "shell" so the same glass bar stays
+/// onscreen continuously through the idle<->expanded transition instead
+/// of being swapped for an unrelated view.
 struct ExpandedPanelView: View {
-    let windowState: NotchWindowState
     let trackerModel: TransitTrackerModel
-    let glassNamespace: Namespace.ID
+    let isShowingMap: Bool
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isShowingMap = false
     @State private var voiceModel = VoicePlaybackModel()
 
-    private let headerHeight: CGFloat = 40
-
     var body: some View {
-        // Two layers, per HIG: Liquid Glass is reserved for the functional
-        // chrome (header/controls) that floats above the content layer;
-        // the content layer itself (tracker/map/status text) uses a
-        // standard material, never glassEffect.
-        ZStack(alignment: .top) {
-            content
-                .padding(.top, headerHeight + 10)
-                .padding([.horizontal, .bottom], 16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(.regularMaterial)
-                .environment(\.colorScheme, .dark)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-            header
-                .padding(.horizontal, 14)
-                .frame(height: headerHeight)
-                .glassEffect(.regular, in: .rect(cornerRadius: 16, style: .continuous))
-                .glassEffectID("shell", in: glassNamespace)
-                .padding(.horizontal, 6)
-                .padding(.top, 6)
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
         VStack(alignment: .leading, spacing: 14) {
             if isShowingMap {
                 RouteMapView(vehiclePosition: trackerModel.status?.vehiclePosition)
@@ -82,39 +58,11 @@ struct ExpandedPanelView: View {
 
             Spacer(minLength: 0)
         }
-    }
-
-    private var header: some View {
-        HStack {
-            Circle()
-                .fill(MTALineColor.l)
-                .frame(width: 10, height: 10)
-            Text("L Train")
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-            Button(action: toggleMap) {
-                Image(systemName: isShowingMap ? "list.bullet" : "map")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isShowingMap ? "Show tracker" : "Show route map")
-
-            Button(action: collapse) {
-                Image(systemName: "chevron.up")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Collapse transit details")
-        }
-    }
-
-    private func toggleMap() {
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.4, dampingFraction: 0.8)) {
-            isShowingMap.toggle()
-        }
+        .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(.regularMaterial)
+        .environment(\.colorScheme, .dark)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     @ViewBuilder
@@ -124,15 +72,15 @@ struct ExpandedPanelView: View {
         } label: {
             Image(systemName: voiceIconName)
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(voiceModel.state == .unavailable ? .tertiary : .secondary)
+                .foregroundStyle(voiceModel.displayState == .unavailable ? .tertiary : .secondary)
         }
         .buttonStyle(.plain)
-        .disabled(voiceModel.state == .unavailable)
+        .disabled(voiceModel.displayState == .unavailable)
         .accessibilityLabel(voiceAccessibilityLabel)
     }
 
     private var voiceIconName: String {
-        switch voiceModel.state {
+        switch voiceModel.displayState {
         case .playing: "speaker.wave.2.fill"
         case .loading: "ellipsis"
         case .unavailable: "speaker.slash"
@@ -142,7 +90,7 @@ struct ExpandedPanelView: View {
     }
 
     private var voiceAccessibilityLabel: String {
-        switch voiceModel.state {
+        switch voiceModel.displayState {
         case .playing: "Stop spoken delay summary"
         case .loading: "Loading spoken delay summary"
         case .unavailable: "Voice unavailable, no ElevenLabs key configured"
@@ -175,11 +123,5 @@ struct ExpandedPanelView: View {
     private func schematicProgress(for etaMinutes: Int) -> Double {
         let assumedMaxWaitMinutes = 10.0
         return min(max(1 - Double(etaMinutes) / assumedMaxWaitMinutes, 0), 1)
-    }
-
-    private func collapse() {
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.4, dampingFraction: 0.8)) {
-            windowState.isExpanded = false
-        }
     }
 }

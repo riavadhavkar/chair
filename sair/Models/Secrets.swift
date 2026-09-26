@@ -14,7 +14,7 @@ import Foundation
 /// reads the file straight off disk using its own source location as an
 /// anchor. That only works while running from a source checkout on the
 /// machine that built it — it is not a distribution-safe secrets mechanism.
-enum Secrets {
+nonisolated enum Secrets {
     static let transitBackendBaseURL: URL = {
         guard let raw = value(for: "TRANSIT_BACKEND_BASE_URL"), let url = URL(string: raw) else {
             return URL(string: "http://localhost:8080")!

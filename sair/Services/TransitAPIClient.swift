@@ -14,7 +14,17 @@ enum TransitAPIError: Error {
 /// URLSession + async/await only, per project convention — no third-party
 /// networking libraries.
 struct TransitAPIClient {
-    var baseURL: URL = Secrets.transitBackendBaseURL
+    var baseURL: URL
+
+    // Explicit nonisolated init: this module defaults new declarations to
+    // MainActor isolation, which would otherwise make the synthesized
+    // memberwise init (and thus every `= TransitAPIClient()` default
+    // argument, e.g. in a View's `@State` property) MainActor-isolated too,
+    // for a plain networking struct that doesn't touch any actor-isolated
+    // state and has no reason to be tied to the main actor.
+    nonisolated init(baseURL: URL = Secrets.transitBackendBaseURL) {
+        self.baseURL = baseURL
+    }
 
     private let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
