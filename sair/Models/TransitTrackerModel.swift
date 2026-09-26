@@ -13,7 +13,11 @@ import Observation
 @MainActor
 @Observable
 final class TransitTrackerModel {
-    private(set) var status: TransitStatus?
+    // Starts from mock data (rather than nil) so the app has something to
+    // show before the backend is deployed. A successful live fetch
+    // overwrites it; failed fetches leave it in place. TODO: drop this
+    // default once TRANSIT_BACKEND_BASE_URL points at a real deployment.
+    private(set) var status: TransitStatus? = .mock
     private(set) var lastUpdated: Date?
     private(set) var lastErrorOccurred = false
 
