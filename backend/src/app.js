@@ -6,6 +6,7 @@ const { isoSeconds } = require("./lib/nyTime");
 const { neighborhoodFor } = require("./config/neighborhoods");
 const { newSpot } = require("./services/spots");
 const { planWalk, STOPS_FOR_MINUTES } = require("./services/walks");
+const { fallbackSymbol } = require("./services/symbols");
 
 const DEVICE_ID = /^[A-Za-z0-9-]{8,64}$/;
 const GEOCODE_CONCURRENCY = 8;
@@ -26,6 +27,7 @@ function spotJSON(spot, visitorCount, collectedAt) {
     name: spot.name,
     crossStreets: spot.crossStreets ?? null,
     neighborhood: spot.neighborhood,
+    symbol: spot.symbol ?? fallbackSymbol(spot.lastCategory),
     lat: spot.lat,
     lon: spot.lon,
     timesFilmed: spot.timesFilmed,

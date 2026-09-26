@@ -1,5 +1,6 @@
 // One-time (re)import: every film permit since IMPORT_SINCE -> one spot per street
-// block -> mark each neighborhood's most-filmed blocks collectible -> geocode those.
+// block -> mark each neighborhood's most-filmed blocks collectible -> geocode those
+// -> Gemini picks an icon for each.
 // Writes data/spots.json (used by the in-memory store) and, when MONGODB_URI is
 // set, replaces the `spots` collection. Check-ins are never touched.
 //
@@ -11,6 +12,8 @@ const path = require("path");
 const { allPermits } = require("../services/permits");
 const { aggregateSpots, markCollectible } = require("../services/spots");
 const geocoder = require("../services/geocoder");
+const { assignSymbols } = require("../services/symbols");
+const { generateText } = require("../services/gemini");
 const { createMongoStore } = require("../store/mongoStore");
 const { SPOTS_FILE } = require("../store");
 
@@ -49,11 +52,14 @@ async function main() {
   console.log(`\n${located}/${collectible.length} collectible blocks located.`);
   fs.writeFileSync(GEOCACHE_FILE, JSON.stringify(geocoder.exportCache()));
 
+  await assignSymbols(collectible, generateText);
+  console.log(`Picked icons for ${collectible.length} blocks${process.env.GEMINI_API_KEY ? " with Gemini" : " (category fallback, no GEMINI_API_KEY)"}.`);
+
   fs.writeFileSync(SPOTS_FILE, JSON.stringify(spots));
   console.log(`Wrote ${SPOTS_FILE}`);
 
   if (process.env.MONGODB_URI) {
-    const store = await createMongoStore({ uri: process.env.MONGODB_URI, dbName: process.env.MONGODB_DB_NAME || "setWatch" });
+    const store = await createMongoStore({ uri: process.env.MONGODB_URI, dbName: process.env.MONGODB_DB_NAME || "chair" });
     await store.replaceSpots(spots);
     console.log("Replaced the spots collection in MongoDB.");
   }

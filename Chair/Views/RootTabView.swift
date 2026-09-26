@@ -4,13 +4,13 @@ import SwiftUI
 struct RootTabView: View {
     var body: some View {
         TabView {
-            Tab("Today", systemImage: "film") {
+            Tab("today", systemImage: "film") {
                 TodayView()
             }
-            Tab("Walk", systemImage: "figure.walk") {
+            Tab("walk", systemImage: "figure.walk") {
                 WalkView()
             }
-            Tab("Collection", systemImage: "square.grid.2x2") {
+            Tab("collection", systemImage: "square.grid.2x2") {
                 CollectionView()
             }
         }
@@ -19,5 +19,5 @@ struct RootTabView: View {
 
 #Preview {
     RootTabView()
-        .environment(AppModel(service: MockSetWatchService()))
+        .environment(AppModel(service: MockChairService()))
 }

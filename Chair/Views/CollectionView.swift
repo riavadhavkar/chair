@@ -2,9 +2,9 @@ import Foundation
 import SwiftUI
 
 enum CollectionFilter: String, CaseIterable, Identifiable {
-    case all = "All"
-    case collected = "Collected"
-    case missing = "Missing"
+    case all = "all"
+    case collected = "collected"
+    case missing = "missing"
 
     var id: Self { self }
 
@@ -47,9 +47,11 @@ enum CollectionLayout {
     }
 }
 
-/// The pins-style collection: All / Collected / Missing, sections by neighborhood.
+/// The pins-style collection: all / collected / missing, sections by neighborhood,
+/// with a toggle to "my map" (your visits on a map).
 struct CollectionView: View {
     @Environment(AppModel.self) private var model
+    @State private var showsMap = false
     @State private var filter: CollectionFilter = .all
     @State private var collapsed: Set<String> = []
     @State private var selected: SpotRoute?
@@ -58,37 +60,57 @@ struct CollectionView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Picker("Filter", selection: $filter) {
-                        ForEach(CollectionFilter.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-
-                    content
+            Group {
+                if showsMap {
+                    VisitMapView(spots: model.collection, selected: $selected)
+                } else {
+                    grid
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
             }
-            .background(.background.secondary)
-            .navigationTitle("Collection")
+            .navigationTitle(showsMap ? "my map" : "collection")
             .toolbarTitleDisplayMode(.inlineLarge)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if model.collectionState == .loaded {
-                    Text(summary)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        withAnimation(.snappy) { showsMap.toggle() }
+                    } label: {
+                        Image(systemName: showsMap ? "square.grid.2x2" : "map")
+                    }
+                    .accessibilityLabel(showsMap ? "show collection grid" : "show my map")
                 }
             }
-            .refreshable { await model.loadCollection() }
             .task { await model.loadCollection() }
             .sheet(item: $selected) { route in
                 SpotSheet(spotID: route.id)
             }
         }
+    }
+
+    private var grid: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Picker("filter", selection: $filter) {
+                    ForEach(CollectionFilter.allCases) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
+
+                content
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 24)
+        }
+        .background(.background.secondary)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if model.collectionState == .loaded {
+                Text(summary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
+            }
+        }
+        .refreshable { await model.loadCollection() }
     }
 
     private var summary: String {
@@ -103,19 +125,19 @@ struct CollectionView: View {
             ProgressView().frame(maxWidth: .infinity, minHeight: 200)
         case .failed(let error) where model.collection.isEmpty:
             ContentUnavailableView {
-                Label("Can't load your collection", systemImage: "wifi.slash")
+                Label("can't load your collection", systemImage: "wifi.slash")
             } description: {
                 Text(error)
             } actions: {
-                Button("Try again") { Task { await model.loadCollection() } }
+                Button("try again") { Task { await model.loadCollection() } }
             }
         default:
             let sections = CollectionLayout.sections(from: model.collection, filter: filter)
             if sections.isEmpty {
                 ContentUnavailableView(
-                    filter == .collected ? "Nothing collected yet" : "No spots here",
+                    filter == .collected ? "nothing collected yet" : "no spots here",
                     systemImage: "movieclapper",
-                    description: Text(filter == .collected ? "Walk to a filmed block and check in to collect it." : "Pull to refresh.")
+                    description: Text(filter == .collected ? "walk to a filmed block and check in to collect it." : "pull to refresh.")
                 )
             } else {
                 ForEach(sections) { section in
@@ -147,7 +169,7 @@ struct CollectionView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(section.id), \(section.collectedCount) of \(section.totalCount) collected")
-            .accessibilityHint(isCollapsed ? "Expands the section" : "Collapses the section")
+            .accessibilityHint(isCollapsed ? "expands the section" : "collapses the section")
 
             if !isCollapsed {
                 LazyVGrid(columns: columns, spacing: 16) {
@@ -156,7 +178,7 @@ struct CollectionView: View {
                             selected = SpotRoute(id: spot.id)
                         } label: {
                             VStack(spacing: 6) {
-                                SpotBadge(isCollected: spot.isCollected)
+                                SpotBadge(symbol: spot.badgeSymbol, isCollected: spot.isCollected)
                                 Text(spot.name)
                                     .font(.caption)
                                     .foregroundStyle(spot.isCollected ? .primary : .secondary)
@@ -176,5 +198,5 @@ struct CollectionView: View {
 
 #Preview {
     CollectionView()
-        .environment(AppModel(service: MockSetWatchService()))
+        .environment(AppModel(service: MockChairService()))
 }

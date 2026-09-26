@@ -22,7 +22,7 @@ final class AppModel {
         case unlocated
     }
 
-    let service: SetWatchService
+    let service: ChairService
     let location = LocationModel()
 
     private(set) var today: [Shoot] = []
@@ -31,7 +31,7 @@ final class AppModel {
     private(set) var collectionState: LoadState = .idle
     private var spots: [String: Spot] = [:]
 
-    init(service: SetWatchService = AppConfig.makeService()) {
+    init(service: ChairService = AppConfig.makeService()) {
         self.service = service
     }
 

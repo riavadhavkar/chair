@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 @main
-struct SetWatchApp: App {
+struct ChairApp: App {
     @State private var model = AppModel()
 
     var body: some Scene {
@@ -10,6 +10,7 @@ struct SetWatchApp: App {
             RootTabView()
                 .environment(model)
                 .tint(.red)
+                .textCase(.lowercase)
                 .task { model.location.start() }
         }
     }

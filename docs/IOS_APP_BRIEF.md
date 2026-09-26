@@ -1,19 +1,19 @@
-# Set Watch — iPhone app build brief
+# chair — iPhone app build brief
 
-> **Status:** implemented in `SetWatch/` and `backend/`. This brief is the spec, and the code follows it.
+> **Status:** implemented in `Chair/` and `backend/`. This brief is the spec, and the code follows it.
 
-Set Watch shows where movies and TV are filming in NYC today, based on the city's public film permits. It also turns the most-filmed blocks into spots people can collect by physically visiting them. Every spot shows how many people have been there, so a visit feels either validated ("a classic") or like a find ("secret spot").
+chair shows where movies and TV are filming in NYC today, based on the city's public film permits. It also turns the most-filmed blocks into spots people can collect by physically visiting them. Every spot shows how many people have been there, so a visit feels either validated ("a classic") or like a find ("secret spot").
 
-The design reference is the **"Set Watch iPhone app"** canvas (https://claude.ai/artifact/Mq6WmAvEq7i7pErSihnP17, private until the owner shares it). Match its layout, spacing and colors. The collection screen follows the same pattern as Apple's pins sample app (WWDC26 session 382).
+The design reference is the **"chair iPhone app"** canvas (https://claude.ai/artifact/Mq6WmAvEq7i7pErSihnP17, private until the owner shares it). Match its layout, spacing and colors. The collection screen follows the same pattern as Apple's pins sample app (WWDC26 session 382).
 
 ---
 
 ## Platform
 
 - **iOS 26, iPhone only. SwiftUI, MapKit, CoreLocation, AVFoundation.** No third-party packages, no UIKit views unless SwiftUI has no equivalent.
-- Create a **new iOS App project** in this repo (e.g. `SetWatch/`). The old macOS notch app in `sair/` is retired, so delete it once the new target builds.
+- Create a **new iOS App project** in this repo (e.g. `Chair/`). The old macOS notch app in `sair/` is retired, so delete it once the new target builds.
 - Networking: `URLSession` + `async/await` + `Codable`.
-- `Info.plist`: `NSLocationWhenInUseUsageDescription` = "Set Watch uses your location to show nearby shoots and to confirm you're at a spot when you check in."
+- `Info.plist`: `NSLocationWhenInUseUsageDescription` = "chair uses your location to show nearby shoots and to confirm you're at a spot when you check in."
 - No accounts. Each install gets an anonymous id: a `UUID` created on first launch and stored in `UserDefaults`.
 
 ## Build it against mock data first
@@ -21,7 +21,7 @@ The design reference is the **"Set Watch iPhone app"** canvas (https://claude.ai
 The backend is being built in parallel. Put all data access behind one protocol so the app runs fully on mock data before the backend exists:
 
 ```swift
-protocol SetWatchService {
+protocol ChairService {
     func filmingToday(near: CLLocationCoordinate2D) async throws -> [Shoot]
     func collection() async throws -> [Spot]
     func spot(id: String) async throws -> Spot
@@ -31,7 +31,7 @@ protocol SetWatchService {
 }
 ```
 
-Ship `MockSetWatchService` (hardcoded sample data that matches the canvas) and `RemoteSetWatchService` (the HTTP API below). Choose between them with one flag.
+Ship `MockChairService` (hardcoded sample data that matches the canvas) and `RemoteChairService` (the HTTP API below). Choose between them with one flag.
 
 ---
 
@@ -167,7 +167,7 @@ extension Spot {
 
 ## HTTP API (the backend implements this)
 
-Base URL comes from `Secrets.xcconfig` (`SETWATCH_BACKEND_BASE_URL`). Dates are ISO-8601 without fractional seconds.
+Base URL comes from `Secrets.xcconfig` (`CHAIR_BACKEND_BASE_URL`). Dates are ISO-8601 without fractional seconds.
 
 | Method | Path | Body / query | Returns |
 |---|---|---|---|
@@ -194,12 +194,12 @@ All API keys (Gemini, ElevenLabs, MongoDB) stay on the server. The app holds non
 
 ## Build order
 
-1. New iOS project, tab bar, `MockSetWatchService`, models.
+1. New iOS project, tab bar, `MockChairService`, models.
 2. Collection screen and Spot sheet on mock data. This is the core, so match the sketch exactly.
 3. Today map with pins and the list sheet.
 4. Location permission and the check-in flow (distance gate, haptic, badge animation).
 5. Walk screen: route drawing, then narration playback.
-6. Swap in `RemoteSetWatchService` once the backend is up.
+6. Swap in `RemoteChairService` once the backend is up.
 7. Polish: empty states ("Nothing filming near you today" should feel calm), offline state, accessibility.
 
 ## Future improvements (not now)

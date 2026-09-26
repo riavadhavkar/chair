@@ -16,7 +16,7 @@ final class NarrationPlayer {
     private let speech = AVSpeechSynthesizer()
     private var monitor: Task<Void, Never>?
 
-    func toggle(walk: Walk, service: SetWatchService) {
+    func toggle(walk: Walk, service: ChairService) {
         if state == .idle {
             Task { await play(walk: walk, service: service) }
         } else {
@@ -32,7 +32,7 @@ final class NarrationPlayer {
         state = .idle
     }
 
-    private func play(walk: Walk, service: SetWatchService) async {
+    private func play(walk: Walk, service: ChairService) async {
         state = .loading
         let audio = try? await service.narration(for: walk)
         guard state == .loading else { return }

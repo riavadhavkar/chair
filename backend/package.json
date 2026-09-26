@@ -1,7 +1,7 @@
 {
-  "name": "set-watch-backend",
+  "name": "chair-backend",
   "version": "3.0.0",
-  "description": "NYC film permits -> collectible filmed blocks, check-ins and walks for the Set Watch iPhone app",
+  "description": "NYC film permits -> collectible filmed blocks, check-ins and walks for the chair iPhone app",
   "main": "src/server.js",
   "type": "commonjs",
   "engines": {

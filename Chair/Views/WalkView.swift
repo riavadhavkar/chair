@@ -36,7 +36,7 @@ struct WalkView: View {
                                     .overlay(Circle().stroke(.white, lineWidth: 3))
                                     .frame(width: 44, height: 44)
                             }
-                            .accessibilityLabel("Stop \(index + 1), \(stop.name)")
+                            .accessibilityLabel("stop \(index + 1), \(stop.name)")
                         }
                         .annotationTitles(.hidden)
                     }
@@ -100,13 +100,13 @@ struct WalkView: View {
                     }
                 }
                 .frame(maxHeight: 240)
-                Text("Stops from NYC film permits · narration written by Gemini")
+                Text("stops from nyc film permits · narration written by gemini")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Walk through filmed blocks").font(.title3.bold())
-                    Text("A \(minutes)-minute loop from where you are, through the most-filmed blocks nearby.")
+                    Text("walk through filmed blocks").font(.title3.bold())
+                    Text("a \(minutes)-minute loop from where you are, through the most-filmed blocks nearby.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -115,7 +115,7 @@ struct WalkView: View {
                 } label: {
                     HStack {
                         if isPlanning { ProgressView().tint(.white) }
-                        Text(isPlanning ? "Planning…" : "Plan my walk")
+                        Text(isPlanning ? "planning…" : "plan my walk")
                     }
                     .font(.headline)
                     .frame(maxWidth: .infinity, minHeight: 50)
@@ -136,7 +136,7 @@ struct WalkView: View {
     private func plannedHeader(_ walk: Walk) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Your \(walk.minutes)-min walk").font(.title3.bold())
+                Text("your \(walk.minutes)-min walk").font(.title3.bold())
                 Text("\(walk.stops.count) filmed blocks")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -151,7 +151,7 @@ struct WalkView: View {
                     case .loading: ProgressView().tint(.white)
                     case .playing: Image(systemName: "waveform").symbolEffect(.variableColor.iterative)
                     }
-                    Text(narration.state == .playing ? "Stop" : "Listen")
+                    Text(narration.state == .playing ? "stop" : "listen")
                 }
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 16)
@@ -160,7 +160,7 @@ struct WalkView: View {
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .tint(.red)
-            .accessibilityLabel(narration.state == .playing ? "Stop narration" : "Listen to the walk narration")
+            .accessibilityLabel(narration.state == .playing ? "stop narration" : "listen to the walk narration")
 
             Button {
                 Task { await plan() }
@@ -168,7 +168,7 @@ struct WalkView: View {
                 Image(systemName: "arrow.clockwise")
                     .frame(width: 44, height: 44)
             }
-            .accessibilityLabel("Plan a new walk")
+            .accessibilityLabel("plan a new walk")
         }
     }
 
@@ -238,7 +238,7 @@ private struct StopRow: View {
             Spacer()
             if spot.isCollected {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.red)
-                    .accessibilityLabel("Collected")
+                    .accessibilityLabel("collected")
             }
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
@@ -252,5 +252,5 @@ private struct StopRow: View {
 
 #Preview {
     WalkView()
-        .environment(AppModel(service: MockSetWatchService()))
+        .environment(AppModel(service: MockChairService()))
 }

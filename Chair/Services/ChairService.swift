@@ -2,7 +2,7 @@ import CoreLocation
 import Foundation
 
 /// All data access goes through this, so the app runs on mock data until the backend is up.
-protocol SetWatchService {
+protocol ChairService {
     func filmingToday(near center: CLLocationCoordinate2D) async throws -> [Shoot]
     func collection() async throws -> [Spot]
     func spot(id: String) async throws -> Spot
@@ -13,7 +13,7 @@ protocol SetWatchService {
     func narration(for walk: Walk) async throws -> Data
 }
 
-nonisolated enum SetWatchError: LocalizedError, Equatable {
+nonisolated enum ChairError: LocalizedError, Equatable {
     case tooFar(meters: Int)
     case notFound
     case notEnoughSpots
@@ -22,11 +22,11 @@ nonisolated enum SetWatchError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .tooFar(let meters): "You're \(DistanceText.format(CLLocationDistance(meters))) away. Get closer to check in."
-        case .notFound: "This spot doesn't exist anymore."
-        case .notEnoughSpots: "Not enough filmed blocks near you for a walk. Try a longer walk or another neighborhood."
-        case .narrationUnavailable: "Narration isn't available right now."
-        case .server(let status): "The server had a problem (\(status)). Try again."
+        case .tooFar(let meters): "you're \(DistanceText.format(CLLocationDistance(meters))) away. get closer to check in."
+        case .notFound: "this spot doesn't exist anymore."
+        case .notEnoughSpots: "not enough filmed blocks near you for a walk. try a longer walk or another neighborhood."
+        case .narrationUnavailable: "narration isn't available right now."
+        case .server(let status): "the server had a problem (\(status)). try again."
         }
     }
 }

@@ -44,7 +44,7 @@ function stopFacts(spot, index) {
 
 function templateNarration(minutes, stops) {
   return [
-    `Welcome to your ${minutes}-minute Set Watch walk through ${stops.length} of the most-filmed blocks near you.`,
+    `Welcome to your ${minutes}-minute chair walk through ${stops.length} of the most-filmed blocks near you.`,
     ...stops.map(stopFacts),
     "That's the loop. Check in at each block to add it to your collection."
   ].join(" ");

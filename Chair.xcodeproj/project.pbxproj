@@ -7,15 +7,15 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		5E7A11000000000000000004 /* SetWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SetWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5E7A11000000000000000006 /* SetWatch.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = SetWatch.xcconfig; sourceTree = "<group>"; };
-		5E7A11000000000000000011 /* SetWatchInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = SetWatchInfo.plist; sourceTree = "<group>"; };
+		5E7A11000000000000000004 /* Chair.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Chair.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E7A11000000000000000006 /* Chair.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Chair.xcconfig; sourceTree = "<group>"; };
+		5E7A11000000000000000011 /* ChairInfo.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = ChairInfo.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5E7A11000000000000000005 /* SetWatch */ = {
+		5E7A11000000000000000005 /* Chair */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SetWatch;
+			path = Chair;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -34,9 +34,9 @@
 		5E7A11000000000000000002 = {
 			isa = PBXGroup;
 			children = (
-				5E7A11000000000000000005 /* SetWatch */,
-				5E7A11000000000000000006 /* SetWatch.xcconfig */,
-				5E7A11000000000000000011 /* SetWatchInfo.plist */,
+				5E7A11000000000000000005 /* Chair */,
+				5E7A11000000000000000006 /* Chair.xcconfig */,
+				5E7A11000000000000000011 /* ChairInfo.plist */,
 				5E7A11000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -44,7 +44,7 @@
 		5E7A11000000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5E7A11000000000000000004 /* SetWatch.app */,
+				5E7A11000000000000000004 /* Chair.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -52,9 +52,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5E7A11000000000000000007 /* SetWatch */ = {
+		5E7A11000000000000000007 /* Chair */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5E7A1100000000000000000E /* Build configuration list for PBXNativeTarget "SetWatch" */;
+			buildConfigurationList = 5E7A1100000000000000000E /* Build configuration list for PBXNativeTarget "Chair" */;
 			buildPhases = (
 				5E7A11000000000000000008 /* Sources */,
 				5E7A11000000000000000009 /* Frameworks */,
@@ -65,13 +65,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5E7A11000000000000000005 /* SetWatch */,
+				5E7A11000000000000000005 /* Chair */,
 			);
-			name = SetWatch;
+			name = Chair;
 			packageProductDependencies = (
 			);
-			productName = SetWatch;
-			productReference = 5E7A11000000000000000004 /* SetWatch.app */;
+			productName = Chair;
+			productReference = 5E7A11000000000000000004 /* Chair.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -89,7 +89,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5E7A1100000000000000000B /* Build configuration list for PBXProject "SetWatch" */;
+			buildConfigurationList = 5E7A1100000000000000000B /* Build configuration list for PBXProject "Chair" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -103,7 +103,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5E7A11000000000000000007 /* SetWatch */,
+				5E7A11000000000000000007 /* Chair */,
 			);
 		};
 /* End PBXProject section */
@@ -129,7 +129,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		5E7A1100000000000000000C /* Debug configuration for PBXProject "SetWatch" */ = {
+		5E7A1100000000000000000C /* Debug configuration for PBXProject "Chair" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -163,7 +163,7 @@
 			};
 			name = Debug;
 		};
-		5E7A1100000000000000000D /* Release configuration for PBXProject "SetWatch" */ = {
+		5E7A1100000000000000000D /* Release configuration for PBXProject "Chair" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -190,9 +190,9 @@
 			};
 			name = Release;
 		};
-		5E7A1100000000000000000F /* Debug configuration for PBXNativeTarget "SetWatch" */ = {
+		5E7A1100000000000000000F /* Debug configuration for PBXNativeTarget "Chair" */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5E7A11000000000000000006 /* SetWatch.xcconfig */;
+			baseConfigurationReference = 5E7A11000000000000000006 /* Chair.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -200,9 +200,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SetWatchInfo.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Set Watch";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Set Watch uses your location to show nearby shoots and to confirm you're at a spot when you check in.";
+				INFOPLIST_FILE = ChairInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "chair";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "chair uses your location to show nearby shoots and to confirm you're at a spot when you check in.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -212,7 +212,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = riavadhavkar.setwatch;
+				PRODUCT_BUNDLE_IDENTIFIER = riavadhavkar.chair;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -227,9 +227,9 @@
 			};
 			name = Debug;
 		};
-		5E7A11000000000000000010 /* Release configuration for PBXNativeTarget "SetWatch" */ = {
+		5E7A11000000000000000010 /* Release configuration for PBXNativeTarget "Chair" */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5E7A11000000000000000006 /* SetWatch.xcconfig */;
+			baseConfigurationReference = 5E7A11000000000000000006 /* Chair.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -237,9 +237,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = SetWatchInfo.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Set Watch";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Set Watch uses your location to show nearby shoots and to confirm you're at a spot when you check in.";
+				INFOPLIST_FILE = ChairInfo.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "chair";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "chair uses your location to show nearby shoots and to confirm you're at a spot when you check in.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -249,7 +249,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = riavadhavkar.setwatch;
+				PRODUCT_BUNDLE_IDENTIFIER = riavadhavkar.chair;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -267,20 +267,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5E7A1100000000000000000B /* Build configuration list for PBXProject "SetWatch" */ = {
+		5E7A1100000000000000000B /* Build configuration list for PBXProject "Chair" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5E7A1100000000000000000C /* Debug configuration for PBXProject "SetWatch" */,
-				5E7A1100000000000000000D /* Release configuration for PBXProject "SetWatch" */,
+				5E7A1100000000000000000C /* Debug configuration for PBXProject "Chair" */,
+				5E7A1100000000000000000D /* Release configuration for PBXProject "Chair" */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5E7A1100000000000000000E /* Build configuration list for PBXNativeTarget "SetWatch" */ = {
+		5E7A1100000000000000000E /* Build configuration list for PBXNativeTarget "Chair" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5E7A1100000000000000000F /* Debug configuration for PBXNativeTarget "SetWatch" */,
-				5E7A11000000000000000010 /* Release configuration for PBXNativeTarget "SetWatch" */,
+				5E7A1100000000000000000F /* Debug configuration for PBXNativeTarget "Chair" */,
+				5E7A11000000000000000010 /* Release configuration for PBXNativeTarget "Chair" */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

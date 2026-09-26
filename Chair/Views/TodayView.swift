@@ -55,7 +55,7 @@ struct TodayView: View {
     private var statusChip: some View {
         HStack(spacing: 8) {
             Circle().fill(.red).frame(width: 8, height: 8)
-            Text("Filming today").fontWeight(.semibold)
+            Text("filming today").fontWeight(.semibold)
             if model.todayState == .loaded {
                 Text("· \(model.today.count) within 1 mi").foregroundStyle(.secondary)
             }
@@ -90,7 +90,7 @@ private struct TodayListCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Filming today").font(.title3.bold())
+                Text("filming today").font(.title3.bold())
                 Spacer()
                 Text("nearest first").font(.footnote).foregroundStyle(.secondary)
             }
@@ -101,10 +101,10 @@ private struct TodayListCard: View {
             case .idle, .loading where model.today.isEmpty:
                 ProgressView().frame(maxWidth: .infinity, minHeight: 80)
             case .failed(let error) where model.today.isEmpty:
-                message(title: "Can't load today's shoots", detail: error, retry: true)
+                message(title: "can't load today's shoots", detail: error, retry: true)
             default:
                 if model.today.isEmpty {
-                    message(title: "Nothing filming near you today", detail: "Check back tomorrow, or plan a walk through past shoots.", retry: false)
+                    message(title: "nothing filming near you today", detail: "check back tomorrow, or plan a walk through past shoots.", retry: false)
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
@@ -138,7 +138,7 @@ private struct TodayListCard: View {
             Text(title).font(.headline)
             Text(detail).font(.subheadline).foregroundStyle(.secondary)
             if retry {
-                Button("Try again") { Task { await model.loadToday() } }
+                Button("try again") { Task { await model.loadToday() } }
                     .frame(minHeight: 44)
             }
         }
@@ -183,5 +183,5 @@ private struct ShootRow: View {
 
 #Preview {
     TodayView()
-        .environment(AppModel(service: MockSetWatchService()))
+        .environment(AppModel(service: MockChairService()))
 }

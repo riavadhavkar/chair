@@ -1,16 +1,16 @@
 import CoreLocation
 import Foundation
 
-/// Values from SetWatch.xcconfig (via SetWatchInfo.plist) plus app-wide constants.
+/// Values from Chair.xcconfig (via ChairInfo.plist) plus app-wide constants.
 enum AppConfig {
     static let backendBaseURL: URL? = {
-        guard let raw = Bundle.main.object(forInfoDictionaryKey: "SetWatchBackendURL") as? String,
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "ChairBackendURL") as? String,
               !raw.isEmpty, !raw.hasPrefix("$(") else { return nil }
         return URL(string: raw)
     }()
 
     static let useMockData: Bool = {
-        let flag = (Bundle.main.object(forInfoDictionaryKey: "SetWatchUseMockData") as? String)?.uppercased()
+        let flag = (Bundle.main.object(forInfoDictionaryKey: "ChairUseMockData") as? String)?.uppercased()
         return flag != "NO" || backendBaseURL == nil
     }()
 
@@ -22,11 +22,11 @@ enum AppConfig {
     static let requiredAccuracy: CLLocationAccuracy = 65
     static let todayRadius: CLLocationDistance = 1600
 
-    static func makeService() -> SetWatchService {
+    static func makeService() -> ChairService {
         if !useMockData, let backendBaseURL {
-            return RemoteSetWatchService(baseURL: backendBaseURL, deviceID: DeviceID.current)
+            return RemoteChairService(baseURL: backendBaseURL, deviceID: DeviceID.current)
         }
-        return MockSetWatchService()
+        return MockChairService()
     }
 }
 

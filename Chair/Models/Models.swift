@@ -20,7 +20,7 @@ nonisolated struct Shoot: Codable, Identifiable, Hashable {
     }
 
     var untilText: String? {
-        endsAt.map { "until \($0.formatted(date: .omitted, time: .shortened))" }
+        endsAt.map { "until \($0.formatted(date: .omitted, time: .shortened).lowercased())" }
     }
 
     func isFilming(at date: Date = .now) -> Bool {
@@ -34,6 +34,8 @@ nonisolated struct Spot: Codable, Identifiable, Hashable {
     let name: String
     let crossStreets: String?
     let neighborhood: String
+    /// SF Symbol picked for this street (by Gemini at import time).
+    let symbol: String?
     let lat: Double?
     let lon: Double?
     let timesFilmed: Int
@@ -43,6 +45,8 @@ nonisolated struct Spot: Codable, Identifiable, Hashable {
     var collectedAt: Date?
 
     var isCollected: Bool { collectedAt != nil }
+
+    var badgeSymbol: String { symbol ?? "movieclapper" }
 
     var coordinate: CLLocationCoordinate2D? {
         guard let lat, let lon else { return nil }
@@ -60,10 +64,10 @@ nonisolated struct Spot: Codable, Identifiable, Hashable {
 
     var vibe: String {
         switch visitorCount {
-        case 0: "Be the first here"
-        case 1...9: "Secret spot"
-        case 10...99: "Local favorite"
-        default: "A classic"
+        case 0: "be the first here"
+        case 1...9: "secret spot"
+        case 10...99: "local favorite"
+        default: "a classic"
         }
     }
 

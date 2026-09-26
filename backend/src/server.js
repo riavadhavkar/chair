@@ -7,7 +7,7 @@ const port = process.env.PORT || 8080;
 createStore()
   .then((store) => {
     createApp({ store }).listen(port, () => {
-      console.log(`Set Watch backend listening on port ${port} (${store.kind} store)`);
+      console.log(`chair backend listening on port ${port} (${store.kind} store)`);
     });
   })
   .catch((error) => {

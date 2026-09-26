@@ -2,7 +2,7 @@ import CoreLocation
 import Foundation
 
 /// The backend HTTP API (see backend/README.md).
-struct RemoteSetWatchService: SetWatchService {
+struct RemoteChairService: ChairService {
     let baseURL: URL
     let deviceID: String
 
@@ -49,11 +49,11 @@ struct RemoteSetWatchService: SetWatchService {
             return try decoder.decode(CheckInResult.self, from: data)
         case 422:
             let body = try? decoder.decode(ErrorBody.self, from: data)
-            throw SetWatchError.tooFar(meters: body?.distanceMeters ?? 0)
+            throw ChairError.tooFar(meters: body?.distanceMeters ?? 0)
         case 404:
-            throw SetWatchError.notFound
+            throw ChairError.notFound
         default:
-            throw SetWatchError.server(status: status)
+            throw ChairError.server(status: status)
         }
     }
 
@@ -64,15 +64,15 @@ struct RemoteSetWatchService: SetWatchService {
         ))
         switch status {
         case 200: return try decoder.decode(Walk.self, from: data)
-        case 404: throw SetWatchError.notEnoughSpots
-        default: throw SetWatchError.server(status: status)
+        case 404: throw ChairError.notEnoughSpots
+        default: throw ChairError.server(status: status)
         }
     }
 
     func narration(for walk: Walk) async throws -> Data {
         let (data, response) = try await session.data(from: url("walks/\(walk.id)/narration"))
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard status == 200 else { throw status == 503 ? SetWatchError.narrationUnavailable : SetWatchError.server(status: status) }
+        guard status == 200 else { throw status == 503 ? ChairError.narrationUnavailable : ChairError.server(status: status) }
         return data
     }
 
@@ -87,8 +87,8 @@ struct RemoteSetWatchService: SetWatchService {
     private func get<T: Decodable>(_ path: String, query: [String: String]) async throws -> T {
         let (data, response) = try await session.data(from: url(path, query: query))
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        if status == 404 { throw SetWatchError.notFound }
-        guard (200..<300).contains(status) else { throw SetWatchError.server(status: status) }
+        if status == 404 { throw ChairError.notFound }
+        guard (200..<300).contains(status) else { throw ChairError.server(status: status) }
         return try decoder.decode(T.self, from: data)
     }
 

@@ -9,7 +9,6 @@ struct SpotSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var loadError: String?
     @State private var checkInError: String?
@@ -20,7 +19,7 @@ struct SpotSheet: View {
             if let spot = model.spot(id: spotID) {
                 content(for: spot)
             } else if let loadError {
-                ContentUnavailableView("Couldn't load this spot", systemImage: "exclamationmark.triangle", description: Text(loadError))
+                ContentUnavailableView("couldn't load this spot", systemImage: "exclamationmark.triangle", description: Text(loadError))
             } else {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -38,27 +37,27 @@ struct SpotSheet: View {
 
     private func content(for spot: Spot) -> some View {
         ScrollView {
-            VStack(spacing: 18) {
+            VStack(spacing: 14) {
                 header(spot)
 
-                SpotBadge(isCollected: spot.isCollected, size: 120)
-                    .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.45, dampingFraction: 0.6), value: spot.isCollected)
+                CollectibleBadge(spot: spot)
                     .sensoryFeedback(.success, trigger: spot.isCollected) { _, collected in collected }
 
-                Text(spot.collectedAt.map { "Collected \($0.formatted(date: .abbreviated, time: .omitted))" } ?? "Not collected yet")
+                Text(spot.collectedAt.map { "collected \($0.formatted(date: .abbreviated, time: .omitted))" } ?? "not collected yet")
                     .font(spot.isCollected ? .subheadline.weight(.semibold) : .subheadline)
                     .foregroundStyle(spot.isCollected ? .primary : .secondary)
 
                 VisitorCounter(spot: spot)
 
                 facts(spot)
+                    .padding(.top, 4)
 
                 if !spot.isCollected {
                     checkInSection(spot)
                 }
 
                 if let coordinate = spot.coordinate {
-                    Button("Walking directions") { openDirections(to: coordinate) }
+                    Button("walking directions") { openDirections(to: coordinate) }
                         .frame(minHeight: 44)
                 }
             }
@@ -89,25 +88,25 @@ struct SpotSheet: View {
                     .background(.fill.tertiary, in: Circle())
             }
             .frame(width: 44, height: 44)
-            .accessibilityLabel("Close")
+            .accessibilityLabel("close")
         }
     }
 
     private func facts(_ spot: Spot) -> some View {
         VStack(spacing: 0) {
             if let shoot = model.shootFilmingNow(at: spot.id) {
-                factRow("Right now") {
+                factRow("right now") {
                     HStack(spacing: 6) {
                         Circle().fill(.red).frame(width: 8, height: 8)
-                        Text(["Filming", shoot.untilText].compactMap { $0 }.joined(separator: " "))
+                        Text(["filming", shoot.untilText].compactMap { $0 }.joined(separator: " "))
                     }
                 }
                 Divider().padding(.leading, 16)
             }
-            factRow("Filmed") { Text("\(spot.timesFilmed) \(spot.timesFilmed == 1 ? "time" : "times") since 2012") }
+            factRow("filmed") { Text("\(spot.timesFilmed) \(spot.timesFilmed == 1 ? "time" : "times") since 2012") }
             if let lastShoot = spot.lastShootText {
                 Divider().padding(.leading, 16)
-                factRow("Last shoot") { Text(lastShoot) }
+                factRow("last shoot") { Text(lastShoot) }
             }
         }
         .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
@@ -138,7 +137,7 @@ struct SpotSheet: View {
                     } else {
                         Image(systemName: "mappin.and.ellipse")
                     }
-                    Text("Check in here")
+                    Text("check in here")
                 }
                 .font(.headline)
                 .frame(maxWidth: .infinity, minHeight: 52)
@@ -162,12 +161,12 @@ struct SpotSheet: View {
 
     private func caption(for availability: AppModel.CheckInAvailability) -> String {
         switch availability {
-        case .ready(let distance): "You're \(DistanceText.format(distance)) away"
-        case .tooFar(let distance): "Get within 100 m to check in · \(DistanceText.format(distance)) away"
-        case .locating: "Finding your location…"
-        case .imprecise: "Waiting for a more precise location…"
-        case .locationDenied: "Allow location access in Settings to check in"
-        case .unlocated: "This block can't be placed on the map yet"
+        case .ready(let distance): "you're \(DistanceText.format(distance)) away"
+        case .tooFar(let distance): "get within 100 m to check in · \(DistanceText.format(distance)) away"
+        case .locating: "finding your location…"
+        case .imprecise: "waiting for a more precise location…"
+        case .locationDenied: "allow location access in settings to check in"
+        case .unlocated: "this block can't be placed on the map yet"
         case .collected: ""
         }
     }

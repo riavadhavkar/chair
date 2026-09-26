@@ -1,13 +1,13 @@
-# Set Watch backend
+# chair backend
 
-Turns NYC's public film permits into collectible street blocks, and serves the Set Watch iPhone app.
+Turns NYC's public film permits into collectible street blocks, and serves the chair iPhone app.
 
 ```
 NYC Open Data film permits (2012 → today)
         │  npm run import (once)
         ▼
 one spot per street block ── times filmed, last shoot, neighborhood
-        │  top 12 blocks per neighborhood = the collectible set, geocoded
+        │  top 12 blocks per neighborhood = the collectible set, geocoded, Gemini picks each an icon
         ▼
 MongoDB Atlas (spots, checkins, walks)  ◀── GET /today reads today's permits live
         │
@@ -45,12 +45,13 @@ Dates are ISO-8601 without fractional seconds. `deviceID` is the app's anonymous
 
 `Shoot`: `{ id, spotID, block, category, subcategory, startsAt, endsAt, lat, lon }`
 
-`Spot`: `{ id, name, crossStreets, neighborhood, lat, lon, timesFilmed, lastFilmed, lastCategory, visitorCount, collectedAt }`
+`Spot`: `{ id, name, crossStreets, neighborhood, symbol, lat, lon, timesFilmed, lastFilmed, lastCategory, visitorCount, collectedAt }`. `symbol` is an SF Symbol name.
 
 ## How the pieces work
 
 - **Spots.** A permit's `parkingheld` field lists the street blocks it holds ("W 20 St between 5 Av and 6 Av, …"). Each block is one spot, identified by a hash of its street and sorted cross streets. `timesFilmed` counts permits that held the block. The neighborhood comes from the permit's ZIP (`src/config/neighborhoods.js`, Manhattan only).
 - **Collectible set.** Each neighborhood's 12 most-filmed blocks, at most one per street (`SPOTS_PER_NEIGHBORHOOD`).
+- **Icons.** During the import, Gemini picks an SF Symbol for each collectible block from a fixed allowlist (`src/services/symbols.js`), based on the street itself, never a show. Anything not on the list (or no `GEMINI_API_KEY`) falls back to an icon for the last shoot's category (tv, film, megaphone…).
 - **Geocoding.** A block's point is the midpoint of its two end intersections. With `NYC_GEOCLIENT_KEY` (free, api-portal.nyc.gov) this uses NYC Geoclient's intersection endpoint; otherwise it uses the keyless GeoSearch, which handles intersections less reliably. **Get the Geoclient key before the demo.**
 - **Check-ins.** The server allows 150 m (`CHECKIN_RADIUS_METERS`); the app requires 100 m and a fix accurate to 65 m. It stores only `{ spotID, deviceID, at }`. Device ids can be spoofed, so treat counts as a fun signal, not proof.
 - **Walks.** The server picks the most-filmed blocks within reach (15 → 3 stops, 30 → 5, 45 → 6) and orders them as a nearest-neighbor loop. Gemini writes the spoken narration from permit facts only, and is told never to name a show. Without `GEMINI_API_KEY`, a template narration is used.
@@ -60,7 +61,7 @@ Dates are ISO-8601 without fractional seconds. `deviceID` is the app's anonymous
 1. Create an app from this repo with source directory `backend/` (the Dockerfile works as-is), or run `npm start` on a Droplet.
 2. Set the env vars from `.env.example`, including `MONGODB_URI` from Atlas. Allow DigitalOcean's egress IPs in Atlas network access.
 3. Run the import once with the same `.env` (locally is fine, as long as it writes to the same Atlas database).
-4. Point your `.tech` domain at the app, then set `SETWATCH_BACKEND_BASE_URL` in the app's `Secrets.xcconfig`.
+4. Point your `.tech` domain at the app, then set `CHAIR_BACKEND_BASE_URL` in the app's `Secrets.xcconfig`.
 
 ## Known limitations
 
