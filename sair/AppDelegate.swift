@@ -21,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         createWindow()
-        positionWindow(size: WindowMetrics.idleSize, animate: false)
+        positionWindow(size: WindowMetrics.idleSize)
 
         NotificationCenter.default.addObserver(
             self,
@@ -55,41 +55,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func resize(forExpanded isExpanded: Bool) {
         window?.hasShadow = isExpanded
         let size = isExpanded ? WindowMetrics.expandedSize : WindowMetrics.idleSize
-        positionWindow(size: size, animate: true)
+        positionWindow(size: size)
     }
 
     @objc private func screenParametersDidChange() {
-        positionWindow(size: window?.frame.size ?? WindowMetrics.idleSize, animate: false)
+        positionWindow(size: window?.frame.size ?? WindowMetrics.idleSize)
     }
 
-    /// Anchors the pill's top edge under the notch (or, on non-notch Macs, just
-    /// below the menu bar) and horizontally centers it, so growing into the
-    /// expanded panel extends purely downward rather than shifting position.
-    private func positionWindow(size: NSSize, animate: Bool) {
+    /// Horizontally centers the pill under the notch (or under the screen's
+    /// center on non-notch Macs), anchored just below the menu bar row so it
+    /// always sits in real, guaranteed-visible desktop space. Note this
+    /// deliberately does NOT reuse the notch row's own vertical band
+    /// (auxiliaryTopLeftArea/RightArea's y-range): that band is exactly as
+    /// tall as the menu bar and centering a window on the notch horizontally
+    /// while placed within that row would put most of its width directly
+    /// over the physical notch cutout, which has zero display pixels
+    /// underneath — the window would be genuinely invisible there, not just
+    /// obscured. Sitting just below the menu bar keeps the "hangs from the
+    /// notch" look without ever rendering into that dead zone. Because the
+    /// vertical anchor is always (visibleFrame.maxY - height), the window's
+    /// top edge stays fixed across size changes, so expanding grows purely
+    /// downward.
+    ///
+    /// The frame change itself is applied instantly (not Core Animation
+    /// -animated via `window.animator()`): animating an NSHostingView-backed
+    /// window's frame at the AppKit layer fights with SwiftUI's own layout
+    /// invalidation for GeometryReader/Map content and can spiral into a
+    /// constraint-update crash. The idle<->expanded transition still reads
+    /// as smooth because RootContentView's SwiftUI `.transition` (opacity +
+    /// scale) animates the content; only the window's raw bounds snap.
+    private func positionWindow(size: NSSize) {
         guard let window, let screen = NSScreen.main else { return }
 
-        let targetRect: NSRect
+        let originX: CGFloat
         if let leftArea = screen.auxiliaryTopLeftArea, let rightArea = screen.auxiliaryTopRightArea {
             let notchCenterX = (leftArea.maxX + rightArea.minX) / 2
-            let originX = notchCenterX - size.width / 2
-            let originY = leftArea.maxY - size.height
-            targetRect = NSRect(origin: NSPoint(x: originX, y: originY), size: size)
+            originX = notchCenterX - size.width / 2
         } else {
-            let originX = screen.frame.midX - size.width / 2
-            let originY = screen.visibleFrame.maxY - size.height - 4
-            targetRect = NSRect(origin: NSPoint(x: originX, y: originY), size: size)
+            originX = screen.frame.midX - size.width / 2
         }
+        let originY = screen.visibleFrame.maxY - size.height - 6
+        let targetRect = NSRect(origin: NSPoint(x: originX, y: originY), size: size)
 
-        let shouldAnimate = animate && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        if shouldAnimate {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.35
-                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                window.animator().setFrame(targetRect, display: true)
-            }
-        } else {
-            window.setFrame(targetRect, display: true)
-        }
+        window.setFrame(targetRect, display: true)
     }
 }
 
