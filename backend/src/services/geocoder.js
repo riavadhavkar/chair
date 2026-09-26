@@ -3,7 +3,8 @@ const { displayStreet } = require("../lib/blocks");
 // Two keyless-or-free NYC geocoders:
 // - NYC Geoclient (free key from api-portal.nyc.gov) has a real intersection endpoint. Preferred.
 // - NYC Planning Labs GeoSearch (keyless) is the fallback; it handles intersections less reliably.
-const GEOCLIENT_URL = "https://api.nyc.gov/geo/geoclient/v2/intersection.json";
+// Base path per the api-portal.nyc.gov docs (Geoclient v2), overridable if it moves.
+const GEOCLIENT_URL = process.env.GEOCLIENT_URL || "https://api.nyc.gov/geoclient/v2/intersection";
 const GEOSEARCH_URL = process.env.GEOSEARCH_URL || "https://geosearch.planninglabs.nyc/v2/search";
 
 const cache = new Map();
