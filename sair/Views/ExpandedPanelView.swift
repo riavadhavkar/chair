@@ -10,12 +10,18 @@ struct ExpandedPanelView: View {
     let trackerModel: TransitTrackerModel
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isShowingMap = false
+    @State private var voiceModel = VoicePlaybackModel()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
 
-            if let status = trackerModel.status {
+            if isShowingMap {
+                RouteMapView(vehiclePosition: trackerModel.status?.vehiclePosition)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let status = trackerModel.status {
                 TrainTrackerView(
                     trainProgress: schematicProgress(for: status.nextArrivalMinutes),
                     nextStopName: trackerModel.stationName,
@@ -24,9 +30,13 @@ struct ExpandedPanelView: View {
                 )
 
                 if let delayReasonRaw = status.delayReasonRaw {
-                    Text(delayReasonRaw)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: 6) {
+                        Text(delayReasonRaw)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
+                        voiceButton(text: delayReasonRaw)
+                    }
                 }
 
                 if let count = status.delayedCountToday, count > 0 {
@@ -38,7 +48,7 @@ struct ExpandedPanelView: View {
                 loadingState
             }
 
-            if trackerModel.isStale {
+            if !isShowingMap, trackerModel.isStale {
                 Text(lastUpdatedText)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -60,7 +70,16 @@ struct ExpandedPanelView: View {
                 .frame(width: 10, height: 10)
             Text("L Train")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Spacer()
+            Button(action: toggleMap) {
+                Image(systemName: isShowingMap ? "list.bullet" : "map")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isShowingMap ? "Show tracker" : "Show route map")
+
             Button(action: collapse) {
                 Image(systemName: "chevron.up")
                     .font(.system(size: 13, weight: .semibold))
@@ -68,6 +87,46 @@ struct ExpandedPanelView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Collapse transit details")
+        }
+    }
+
+    private func toggleMap() {
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.4, dampingFraction: 0.8)) {
+            isShowingMap.toggle()
+        }
+    }
+
+    @ViewBuilder
+    private func voiceButton(text: String) -> some View {
+        Button {
+            voiceModel.toggle(text: text)
+        } label: {
+            Image(systemName: voiceIconName)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(voiceModel.state == .unavailable ? .tertiary : .secondary)
+        }
+        .buttonStyle(.plain)
+        .disabled(voiceModel.state == .unavailable)
+        .accessibilityLabel(voiceAccessibilityLabel)
+    }
+
+    private var voiceIconName: String {
+        switch voiceModel.state {
+        case .playing: "speaker.wave.2.fill"
+        case .loading: "ellipsis"
+        case .unavailable: "speaker.slash"
+        case .failed: "exclamationmark.triangle"
+        case .idle: "speaker.wave.2"
+        }
+    }
+
+    private var voiceAccessibilityLabel: String {
+        switch voiceModel.state {
+        case .playing: "Stop spoken delay summary"
+        case .loading: "Loading spoken delay summary"
+        case .unavailable: "Voice unavailable, no ElevenLabs key configured"
+        case .failed: "Play spoken delay summary, previous attempt failed"
+        case .idle: "Play spoken delay summary"
         }
     }
 
@@ -80,6 +139,7 @@ struct ExpandedPanelView: View {
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.vertical, 24)
+        .accessibilityElement(children: .combine)
     }
 
     private var lastUpdatedText: String {

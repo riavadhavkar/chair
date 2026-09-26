@@ -28,7 +28,7 @@ extension TransitStatus {
         nextArrivalMinutes: 4,
         delayMinutes: 2,
         delayReasonRaw: "Minor delays due to signal problems at Bedford Av.",
-        vehiclePosition: nil,
+        vehiclePosition: VehiclePosition(lat: 40.7174, lon: -73.9566),
         delayedCountToday: 2
     )
 }

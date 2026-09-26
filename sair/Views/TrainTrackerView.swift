@@ -57,6 +57,7 @@ struct TrainTrackerView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(nextStopName) in \(remainingSeconds / 60) minutes \(remainingSeconds % 60) seconds")
+        .accessibilityAddTraits(.updatesFrequently)
         .task(id: etaMinutes) {
             remainingSeconds = etaMinutes * 60
             while !Task.isCancelled {
