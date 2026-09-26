@@ -1,72 +1,103 @@
-# Transit Notch Backend
+# Set Watch Backend
 
-Decodes MTA's public GTFS-realtime feeds into the simplified JSON the Mac/iOS
-apps poll, calls Gemini to turn raw service-alert text into a plain-language
-sentence, and logs delay history to MongoDB for the trend indicator.
+Turns NYC's public film permits into "what's filming near me right now" JSON for
+the Set Watch notch app (and the stretch iMessage / voice-call front-ends).
 
-This is a separate service from the Xcode project — deploy it wherever you
-like (DigitalOcean App Platform or a Droplet both work) and point the app's
-`Secrets.xcconfig` at its URL.
+```
+NYC Open Data film permits ─┐
+                            ├─ geocode first held block (NYC GeoSearch)
+config/titleHints.json ─────┼─ curated title for this permit id (if any)
+                            ├─ TMDB exact-title match → poster, synopsis, genres, cast
+                            ├─ Gemini → one plain sentence (template fallback)
+                            └─ cache (MongoDB Atlas, or in-memory) → /nearby, /ask, /go/:id
+```
 
 ## Setup
 
 ```bash
 cd backend
 npm install
-cp .env.example .env   # fill in the values below
+cp .env.example .env   # every key is optional; see below
 npm run dev
+npm run prefetch       # warm the cache before a demo
 ```
 
-`GET http://localhost:8080/status?line=L&station=L03` should return JSON.
-`GET http://localhost:8080/health` is a plain liveness check.
+## Endpoints
 
-## Required environment variables
+| Route | What it returns |
+|---|---|
+| `GET /health` | `{ ok: true }` |
+| `GET /nearby?lat=&lon=&radius=` | `{ generatedAt, center, radiusMeters, productions: [...] }`: TMDB-matched shoots first, then nearest first. Omit `lat`/`lon` to use `DEFAULT_LAT`/`DEFAULT_LON`. |
+| `POST /ask` `{ text, lat?, lon? }` | `{ reply, production }`: one text answer. The Photon iMessage handler and the ElevenLabs call script call this. Neighborhood names in `text` ("SoHo", "Chelsea"…) set the center. |
+| `GET /go/:id` | A tiny HTML page with Open Graph tags (Mapbox static map) that forwards to Apple Maps walking directions, so a link sent in iMessage renders as a map card. |
 
-| Variable | Required? | Where to get it |
-|---|---|---|
-| `PORT` | No (defaults 8080) | — |
-| `GEMINI_API_KEY` | No, but recommended | [Google AI Studio](https://aistudio.google.com/apikey) — free tier available |
-| `GEMINI_MODEL` | No (defaults `gemini-2.5-flash`) | Check the [current model list](https://ai.google.dev/gemini-api/docs/models) if this 404s — model ids get renamed/retired over time |
-| `MONGODB_URI` | No, but recommended | [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free (M0) cluster connection string |
-| `MONGODB_DB_NAME` | No (defaults `transitTracker`) | — |
+A production looks like:
 
-Without `GEMINI_API_KEY`, `/status` still works — `delayReasonRaw` just
-returns the raw MTA alert text unsummarized. Without `MONGODB_URI`, it still
-works too — `delayedCountToday` comes back `null` and no history is recorded.
-Nothing about this service requires an MTA API key; the GTFS-realtime and
-alerts feeds it polls are public and keyless.
+```json
+{
+  "id": "812345",
+  "category": "Television",
+  "subcategory": "Episodic series",
+  "borough": "Manhattan",
+  "startsAt": "2026-09-26T11:00:00Z",
+  "endsAt": "2026-09-27T01:00:00Z",
+  "location": { "raw": "WEST 20 STREET between 5 AVENUE and 6 AVENUE", "display": "W 20 St between 5 & 6 Av", "lat": 40.74, "lon": -73.99, "precision": "intersection" },
+  "titleHint": "The Night Desk",
+  "match": { "source": "tmdb", "tmdbId": 1, "mediaType": "tv", "title": "…", "year": 2025, "overview": "…", "genres": ["Drama"], "cast": ["…"], "posterURL": "https://image.tmdb.org/…", "backdropURL": null },
+  "summary": "The Night Desk is filming on W 20 St between 5 & 6 Av until 9 PM.",
+  "directionsURL": "https://maps.apple.com/?daddr=40.74,-73.99&dirflg=w",
+  "distanceMeters": 160,
+  "shareURL": "https://yourdomain.tech/go/812345"
+}
+```
 
-## Known limitations (documented, not silent)
+`match` is `null` when there's no confident TMDB match. `titleHint` is `null` when nobody curated a title.
 
-- **Feed URLs** (`src/config/feeds.js`) are MTA's current public
-  GTFS-realtime endpoints as of when this was written. Verify against
-  <https://api.mta.info/#/subwayRealTimeFeeds> if `/status` starts returning
-  502s — MTA has moved these before.
-- **Station coordinates** (`src/config/stations.js`) are a small,
-  hand-entered lookup for a handful of L train stops, meant to unblock
-  wiring/testing. Replace with MTA's authoritative static GTFS bundle
-  (stops.txt in <https://rrgtfsfeeds.s3.amazonaws.com/google_transit.zip>)
-  before trusting station names/coordinates beyond local dev.
-- **`vehiclePosition` is an approximation**, not live GPS. NYCT's standard
-  subway GTFS-realtime feed doesn't include continuous vehicle
-  latitude/longitude (that requires parsing MTA's `nyct-subway.proto`
-  extension for current stop sequence/status, which this service doesn't
-  do yet). `vehiclePosition` currently just returns the *upcoming* station's
-  coordinates as a stand-in. The Mac app's primary tracker doesn't need this
-  at all (it's schematic, driven by `nextArrivalMinutes`) — this field only
-  feeds the secondary literal Mapbox view.
-- Only subway lines are covered (`src/config/feeds.js` line → feed-group
-  map); buses aren't handled.
+## The permit dataset has no title column
 
-## Deploying to DigitalOcean
+The Film Permits dataset (`tg4x-b46p`) lists event id, times, category, subcategory,
+borough, zip codes and the held street blocks. It **does not include the production's name.**
+So titles come from `src/config/titleHints.json`, which you fill in by hand for the demo:
 
-**App Platform** (simplest): create an app from this `backend/` directory
-(or point at a Dockerfile build), set the environment variables above as
-encrypted app-level secrets, and note the generated public URL.
+```json
+{ "byEventId": { "812345": { "title": "Exact TMDB Title", "source": "https://link-to-public-report" } } }
+```
 
-**Droplet + Docker**: `docker build -t transit-backend .` then
-`docker run -d -p 8080:8080 --env-file .env transit-backend`, behind
-whatever reverse proxy/TLS termination you're already running.
+Only put in titles you can source publicly (press or the production's own announcement).
+TMDB only counts **exact** normalized title matches, because a fuzzy match would put the
+wrong poster on a working title. Everything else shows up as the permit-only fallback card,
+which is why that card has to look intentional.
 
-Either way, give the resulting HTTPS URL to the Mac app's
-`Secrets.xcconfig` as `TRANSIT_BACKEND_BASE_URL`.
+## Environment variables
+
+All optional. Without them the service still runs and gets less rich:
+
+| Variable | Without it |
+|---|---|
+| `TMDB_READ_TOKEN` or `TMDB_API_KEY` | No posters/synopses; every card is the permit-only fallback |
+| `GEMINI_API_KEY` | `summary` uses a template sentence |
+| `MONGODB_URI` | Cache is in-memory only (lost on restart) |
+| `NYC_OPEN_DATA_APP_TOKEN` | Lower Socrata rate limit |
+| `PUBLIC_BASE_URL` | `shareURL` is `null` |
+| `MAPBOX_ACCESS_TOKEN` | `/go/:id` has no preview image |
+| `DEFAULT_LAT` / `DEFAULT_LON` / `DEFAULT_LABEL` / `DEMO_BOROUGH` / `DEFAULT_RADIUS_METERS` | Chelsea, Manhattan, 1.5 km |
+
+TMDB requires attribution: show "This product uses the TMDB API but is not endorsed or certified by TMDB." in the app's about/credits.
+
+## Known limitations
+
+- **Location precision varies.** Only the first held block is geocoded (its first cross
+  street, else the street). Multi-block permits show one point. Permits that can't be
+  geocoded are dropped from `/nearby`.
+- **Single borough** (`DEMO_BOROUGH`), per the MVP scope.
+- Verify the dataset URL/columns and the GeoSearch endpoint before deploying. Both are
+  public services that can change.
+
+## Stretch front-ends (not built yet)
+
+- **Photon iMessage bot:** a separate small Node process scaffolded with
+  `npm create spectrum-project@latest -- --yes --platforms imessage --projectId <id>`.
+  Its message handler should `POST /ask` with the inbound text and send back `reply`
+  plus `production.shareURL`. Keep its `.env` out of git.
+- **ElevenLabs + Twilio call:** the call server should build the agent's first message
+  from `POST /ask` (or `GET /nearby`). Only call a number its owner opted in.

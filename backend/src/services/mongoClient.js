@@ -1,49 +1,38 @@
 const { MongoClient } = require("mongodb");
 
+// Key/value cache for geocodes, TMDB matches and enriched productions.
+// Uses MongoDB Atlas when MONGODB_URI is set, otherwise an in-process Map,
+// so local dev works with zero setup.
 let clientPromise = null;
+const memory = new Map();
 
-/// Lazily connects on first use; returns null (rather than throwing) when
-/// MONGODB_URI isn't configured, so history/trend features degrade
-/// gracefully instead of taking down the whole /status endpoint.
-function getClient() {
+function collection() {
   const uri = process.env.MONGODB_URI;
   if (!uri) return null;
-  if (!clientPromise) {
-    clientPromise = new MongoClient(uri).connect();
-  }
-  return clientPromise;
+  if (!clientPromise) clientPromise = new MongoClient(uri).connect();
+  return clientPromise.then((client) =>
+    client.db(process.env.MONGODB_DB_NAME || "setWatch").collection("cache")
+  );
 }
 
-function collectionFor(client) {
-  const dbName = process.env.MONGODB_DB_NAME || "transitTracker";
-  return client.db(dbName).collection("delaySnapshots");
+/// Returns `undefined` on a miss so callers can cache a real `null` ("we looked, nothing matched").
+async function cacheGet(key) {
+  if (memory.has(key)) return memory.get(key);
+  const coll = await collection()?.catch(() => null);
+  if (!coll) return undefined;
+  const doc = await coll.findOne({ _id: key }).catch(() => null);
+  if (!doc) return undefined;
+  memory.set(key, doc.value);
+  return doc.value;
 }
 
-async function recordSnapshot({ line, station, delayMinutes }) {
-  const client = await getClient();
-  if (!client) return;
-
-  await collectionFor(client).insertOne({
-    line,
-    station,
-    delayMinutes,
-    recordedAt: new Date()
-  });
+async function cacheSet(key, value) {
+  memory.set(key, value);
+  const coll = await collection()?.catch(() => null);
+  if (!coll) return;
+  await coll
+    .updateOne({ _id: key }, { $set: { value, updatedAt: new Date() } }, { upsert: true })
+    .catch((error) => console.error("Mongo cacheSet failed:", error.message));
 }
 
-async function delayedCountToday({ line, station }) {
-  const client = await getClient();
-  if (!client) return null;
-
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  return collectionFor(client).countDocuments({
-    line,
-    station,
-    delayMinutes: { $gt: 0 },
-    recordedAt: { $gte: startOfDay }
-  });
-}
-
-module.exports = { recordSnapshot, delayedCountToday };
+module.exports = { cacheGet, cacheSet };

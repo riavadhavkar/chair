@@ -1,7 +1,7 @@
 {
-  "name": "transit-notch-backend",
-  "version": "1.0.0",
-  "description": "GTFS-realtime -> simplified JSON backend for the NYC Transit Tracker notch app",
+  "name": "set-watch-backend",
+  "version": "2.0.0",
+  "description": "NYC film permits + TMDB + Gemini -> simplified JSON for the Set Watch notch app",
   "main": "src/server.js",
   "type": "commonjs",
   "engines": {
@@ -9,12 +9,12 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "prefetch": "node src/scripts/prefetch.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "gtfs-realtime-bindings": "^1.1.1",
     "mongodb": "^6.9.0"
   }
 }

@@ -5,134 +5,165 @@
 
 import SwiftUI
 
+/// Everything below the notch row when expanded: the production card (or map),
+/// controls, pager and source attribution — or the empty/offline/loading states.
 struct ExpandedPanelView: View {
-    let windowState: NotchWindowState
-    let trackerModel: TransitTrackerModel
-    let glassNamespace: Namespace.ID
+    let feed: NearbyFeedModel
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openURL) private var openURL
     @State private var isShowingMap = false
     @State private var voiceModel = VoicePlaybackModel()
 
-    private let headerHeight: CGFloat = 40
-
     var body: some View {
-        // Two layers, per HIG: Liquid Glass is reserved for the functional
-        // chrome (header/controls) that floats above the content layer;
-        // the content layer itself (tracker/map/status text) uses a
-        // standard material, never glassEffect.
-        ZStack(alignment: .top) {
-            content
-                .padding(.top, headerHeight + 10)
-                .padding([.horizontal, .bottom], 16)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(.regularMaterial)
-                .environment(\.colorScheme, .dark)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-            header
-                .padding(.horizontal, 14)
-                .frame(height: headerHeight)
-                .glassEffect(.regular, in: .rect(cornerRadius: 16, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
-                }
-                .glassEffectID("shell", in: glassNamespace)
-                .padding(.horizontal, 6)
-                .padding(.top, 6)
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if isShowingMap {
-                RouteMapView(vehiclePosition: trackerModel.status?.vehiclePosition)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let status = trackerModel.status {
-                TrainTrackerView(
-                    trainProgress: schematicProgress(for: status.nextArrivalMinutes),
-                    nextStopName: trackerModel.stationName,
-                    etaMinutes: status.nextArrivalMinutes,
-                    lineColor: MTALineColor.l
-                )
-
-                if let delayReasonRaw = status.delayReasonRaw {
-                    HStack(alignment: .top, spacing: 6) {
-                        Text(delayReasonRaw)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer(minLength: 0)
-                        voiceButton(text: delayReasonRaw)
-                    }
-                }
-
-                if let count = status.delayedCountToday, count > 0 {
-                    Text("Delayed \(count)x today")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+        Group {
+            if let production = feed.selected {
+                productionContent(production)
+            } else if feed.response != nil {
+                emptyState
+            } else if feed.lastErrorOccurred {
+                offlineState
             } else {
-                loadingState
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .padding(.horizontal, NotchLayout.shoulder + 20)
+        .padding(.top, 16)
+        .padding(.bottom, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .foregroundStyle(.white)
+        .environment(\.colorScheme, .dark)
+    }
+
+    private func productionContent(_ production: Production) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if isShowingMap {
+                ProductionMapView(production: production, home: feed.response?.center)
+                    .frame(maxHeight: .infinity)
+            } else {
+                ProductionCardView(production: production)
+                    .id(production.id)
+                    .transition(.opacity)
             }
 
-            if !isShowingMap, trackerModel.isStale {
-                Text(lastUpdatedText)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
+            controls(for: production)
 
-            Spacer(minLength: 0)
+            Text(footerText(for: production))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 
-    private var header: some View {
-        HStack {
-            Circle()
-                .fill(MTALineColor.l)
-                .frame(width: 10, height: 10)
-            Text("L Train")
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
+    private func controls(for production: Production) -> some View {
+        HStack(spacing: 8) {
+            if let directionsURL = production.directionsURL {
+                Button {
+                    openURL(directionsURL)
+                } label: {
+                    Label("Directions", systemImage: "location.north.fill")
+                        .font(.callout.weight(.semibold))
+                        .padding(.horizontal, 16)
+                        .frame(height: 36)
+                        .background(.white, in: Capsule())
+                        .foregroundStyle(.black)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Walking directions in Maps")
+            }
+
+            circleButton(systemImage: voiceIconName, label: voiceAccessibilityLabel) {
+                voiceModel.toggle(text: production.summary)
+            }
+            .disabled(voiceModel.state == .unavailable)
+
+            circleButton(systemImage: isShowingMap ? "rectangle.portrait" : "map", label: isShowingMap ? "Show production card" : "Show map") {
+                withAnimation(panelAnimation) { isShowingMap.toggle() }
+            }
+
             Spacer()
-            Button(action: toggleMap) {
-                Image(systemName: isShowingMap ? "list.bullet" : "map")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isShowingMap ? "Show tracker" : "Show route map")
 
-            Button(action: collapse) {
-                Image(systemName: "chevron.up")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
+            if feed.productions.count > 1 {
+                pager
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Collapse transit details")
         }
     }
 
-    private func toggleMap() {
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.4, dampingFraction: 0.8)) {
-            isShowingMap.toggle()
-        }
-    }
-
-    @ViewBuilder
-    private func voiceButton(text: String) -> some View {
-        Button {
-            voiceModel.toggle(text: text)
-        } label: {
-            Image(systemName: voiceIconName)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(voiceModel.state == .unavailable ? .tertiary : .secondary)
+    private var pager: some View {
+        HStack(spacing: 4) {
+            Button { withAnimation(panelAnimation) { feed.selectPrevious() } } label: {
+                Image(systemName: "chevron.left").frame(width: 28, height: 28).contentShape(Rectangle())
+            }
+            .accessibilityLabel("Previous production")
+            Text("\(feed.selectedIndex + 1) of \(feed.productions.count)")
+                .font(.caption)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+            Button { withAnimation(panelAnimation) { feed.selectNext() } } label: {
+                Image(systemName: "chevron.right").frame(width: 28, height: 28).contentShape(Rectangle())
+            }
+            .accessibilityLabel("Next production")
         }
         .buttonStyle(.plain)
-        .disabled(voiceModel.state == .unavailable)
-        .accessibilityLabel(voiceAccessibilityLabel)
+        .font(.system(size: 12, weight: .semibold))
+    }
+
+    private func circleButton(systemImage: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .medium))
+                .frame(width: 36, height: 36)
+                .background(.white.opacity(0.08), in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.16), lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    private var emptyState: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "movieclapper")
+                .font(.system(size: 24, weight: .light))
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Nothing filming near you today").font(.headline)
+                Text("\(feed.placeLabel) · \(checkedText)").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var offlineState: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 20))
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Can’t reach live data").font(.headline)
+                Text(checkedText).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Retry") { Task { await feed.refresh() } }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+        }
+    }
+
+    private var checkedText: String {
+        guard let lastUpdated = feed.lastUpdated else { return "not checked yet" }
+        let minutes = max(0, Int(Date().timeIntervalSince(lastUpdated) / 60))
+        return minutes == 0 ? "checked just now" : "checked \(minutes) min ago"
+    }
+
+    private func footerText(for production: Production) -> String {
+        var parts = [production.isMatched
+            ? "Title & poster via TMDB · location & hours from NYC film permit"
+            : "No title on this permit — productions often file under working names"]
+        if feed.isStale, feed.lastUpdated != nil { parts.append(checkedText) }
+        return parts.joined(separator: " · ")
+    }
+
+    private var panelAnimation: Animation {
+        reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.4, dampingFraction: 0.85)
     }
 
     private var voiceIconName: String {
@@ -147,43 +178,11 @@ struct ExpandedPanelView: View {
 
     private var voiceAccessibilityLabel: String {
         switch voiceModel.state {
-        case .playing: "Stop spoken delay summary"
-        case .loading: "Loading spoken delay summary"
+        case .playing: "Stop spoken summary"
+        case .loading: "Loading spoken summary"
         case .unavailable: "Voice unavailable, no ElevenLabs key configured"
-        case .failed: "Play spoken delay summary, previous attempt failed"
-        case .idle: "Play spoken delay summary"
-        }
-    }
-
-    private var loadingState: some View {
-        VStack(spacing: 6) {
-            ProgressView()
-            Text(trackerModel.lastErrorOccurred ? "Can't reach the transit backend." : "Loading arrival data…")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.vertical, 24)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var lastUpdatedText: String {
-        guard let lastUpdated = trackerModel.lastUpdated else { return "Not yet updated" }
-        let minutesAgo = max(0, Int(Date().timeIntervalSince(lastUpdated) / 60))
-        return minutesAgo == 0 ? "Updated just now" : "Last updated \(minutesAgo)m ago"
-    }
-
-    /// The backend reports minutes-to-arrival, not a literal position along
-    /// our stylized route, so approximate schematic progress from that —
-    /// consistent with TrainTrackerView being a schematic, not a literal map.
-    private func schematicProgress(for etaMinutes: Int) -> Double {
-        let assumedMaxWaitMinutes = 10.0
-        return min(max(1 - Double(etaMinutes) / assumedMaxWaitMinutes, 0), 1)
-    }
-
-    private func collapse() {
-        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.4, dampingFraction: 0.8)) {
-            windowState.isExpanded = false
+        case .failed: "Play spoken summary, previous attempt failed"
+        case .idle: "Play spoken summary"
         }
     }
 }

@@ -15,14 +15,13 @@ import Foundation
 /// anchor. That only works while running from a source checkout on the
 /// machine that built it — it is not a distribution-safe secrets mechanism.
 enum Secrets {
-    static let transitBackendBaseURL: URL = {
-        guard let raw = value(for: "TRANSIT_BACKEND_BASE_URL"), let url = URL(string: raw) else {
+    static let backendBaseURL: URL = {
+        guard let raw = value(for: "SETWATCH_BACKEND_BASE_URL"), let url = URL(string: raw) else {
             return URL(string: "http://localhost:8080")!
         }
         return url
     }()
 
-    static let mapboxAccessToken: String? = value(for: "MAPBOX_ACCESS_TOKEN")
     static let elevenLabsAPIKey: String? = value(for: "ELEVENLABS_API_KEY")
 
     private static let entries: [String: String] = loadEntries()
