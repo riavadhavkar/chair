@@ -3,7 +3,6 @@
 //  sair
 //
 
-#if os(macOS)
 import AppKit
 import SwiftUI
 
@@ -98,4 +97,3 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 private final class NotchPillWindow: NSWindow {
     override var canBecomeKey: Bool { false }
 }
-#endif
