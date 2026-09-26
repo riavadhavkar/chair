@@ -165,14 +165,19 @@ struct SparkleBurst: View {
     @State private var particles: [Particle] = []
 
     var body: some View {
+        // keyframeAnimator's content closure isn't guaranteed MainActor by
+        // its own type signature, so it can't implicitly read the
+        // MainActor-isolated `particles` @State directly; capture a plain
+        // (Sendable-safe) local snapshot instead.
+        let currentParticles = particles
         Color.clear
             .keyframeAnimator(initialValue: 0.0, trigger: trigger) { _, progress in
                 ZStack {
                     Circle()
                         .stroke(Color.red.opacity(0.35 * (1 - progress)), lineWidth: 3)
                         .frame(width: radius * (0.5 + progress), height: radius * (0.5 + progress))
-                        .opacity(particles.isEmpty ? 0 : 1)
-                    ForEach(particles) { particle in
+                        .opacity(currentParticles.isEmpty ? 0 : 1)
+                    ForEach(currentParticles) { particle in
                         Image(systemName: particle.symbol)
                             .font(.system(size: particle.size))
                             .foregroundStyle(particle.color)

@@ -13,6 +13,9 @@ struct SpotSheet: View {
     @State private var loadError: String?
     @State private var checkInError: String?
     @State private var isCheckingIn = false
+    // Defaults to .large: at .medium the check-in button sat below the
+    // fold, requiring an extra drag to even discover it existed.
+    @State private var detent: PresentationDetent = .large
 
     var body: some View {
         Group {
@@ -31,7 +34,7 @@ struct SpotSheet: View {
                 if model.spot(id: spotID) == nil { loadError = error.localizedDescription }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.medium, .large], selection: $detent)
         .presentationDragIndicator(.visible)
     }
 

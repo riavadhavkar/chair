@@ -98,7 +98,7 @@ private struct TodayListCard: View {
             .padding(.top, 14)
 
             switch model.todayState {
-            case .idle, .loading where model.today.isEmpty:
+            case .idle where model.today.isEmpty, .loading where model.today.isEmpty:
                 ProgressView().frame(maxWidth: .infinity, minHeight: 80)
             case .failed(let error) where model.today.isEmpty:
                 message(title: "can't load today's shoots", detail: error, retry: true)
