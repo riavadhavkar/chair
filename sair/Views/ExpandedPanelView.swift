@@ -8,15 +8,41 @@ import SwiftUI
 struct ExpandedPanelView: View {
     let windowState: NotchWindowState
     let trackerModel: TransitTrackerModel
+    let glassNamespace: Namespace.ID
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isShowingMap = false
     @State private var voiceModel = VoicePlaybackModel()
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            header
+    private let headerHeight: CGFloat = 40
 
+    var body: some View {
+        // Two layers, per HIG: Liquid Glass is reserved for the functional
+        // chrome (header/controls) that floats above the content layer;
+        // the content layer itself (tracker/map/status text) uses a
+        // standard material, never glassEffect.
+        ZStack(alignment: .top) {
+            content
+                .padding(.top, headerHeight + 10)
+                .padding([.horizontal, .bottom], 16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(.regularMaterial)
+                .environment(\.colorScheme, .dark)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            header
+                .padding(.horizontal, 14)
+                .frame(height: headerHeight)
+                .glassEffect(.regular, in: .rect(cornerRadius: 16, style: .continuous))
+                .glassEffectID("shell", in: glassNamespace)
+                .padding(.horizontal, 6)
+                .padding(.top, 6)
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 14) {
             if isShowingMap {
                 RouteMapView(vehiclePosition: trackerModel.status?.vehiclePosition)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -56,11 +82,6 @@ struct ExpandedPanelView: View {
 
             Spacer(minLength: 0)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(.regularMaterial)
-        .environment(\.colorScheme, .dark)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var header: some View {
