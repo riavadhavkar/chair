@@ -60,8 +60,18 @@ struct SpotSheet: View {
                 }
 
                 if let coordinate = spot.coordinate {
-                    Button("walking directions") { openDirections(to: coordinate) }
-                        .frame(minHeight: 44)
+                    Button {
+                        openDirections(to: coordinate)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "figure.walk")
+                            Text("walking directions")
+                        }
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
                 }
             }
             .padding(.horizontal, 24)
