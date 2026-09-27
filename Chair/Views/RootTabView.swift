@@ -4,7 +4,7 @@ import SwiftUI
 struct RootTabView: View {
     var body: some View {
         TabView {
-            Tab("today", systemImage: "film") {
+            Tab("today", systemImage: "movieclapper") {
                 TodayView()
             }
             Tab("walk", systemImage: "figure.walk") {
