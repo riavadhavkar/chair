@@ -15,3 +15,6 @@ backend/npm-debug.log*
 
 # macOS
 .DS_Store
+
+# Import output (regenerate with npm run import)
+backend/data/

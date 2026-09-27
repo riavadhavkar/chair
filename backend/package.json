@@ -1,20 +1,21 @@
 {
-  "name": "transit-notch-backend",
-  "version": "1.0.0",
-  "description": "GTFS-realtime -> simplified JSON backend for the NYC Transit Tracker notch app",
+  "name": "chair-backend",
+  "version": "3.0.0",
+  "description": "NYC film permits -> collectible filmed blocks, check-ins and walks for the chair iPhone app",
   "main": "src/server.js",
   "type": "commonjs",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "import": "node src/scripts/importPermits.js",
+    "test": "node --test"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "gtfs-realtime-bindings": "^1.1.1",
     "mongodb": "^6.9.0"
   }
 }

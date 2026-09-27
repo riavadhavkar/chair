@@ -1,72 +1,70 @@
-# Transit Notch Backend
+# chair backend
 
-Decodes MTA's public GTFS-realtime feeds into the simplified JSON the Mac/iOS
-apps poll, calls Gemini to turn raw service-alert text into a plain-language
-sentence, and logs delay history to MongoDB for the trend indicator.
+Turns NYC's public film permits into collectible street blocks, and serves the chair iPhone app.
 
-This is a separate service from the Xcode project — deploy it wherever you
-like (DigitalOcean App Platform or a Droplet both work) and point the app's
-`Secrets.xcconfig` at its URL.
+```
+NYC Open Data film permits (2012 → today)
+        │  npm run import (once)
+        ▼
+one spot per street block ── times filmed, last shoot, neighborhood
+        │  top 12 blocks per neighborhood = the collectible set, geocoded, Gemini picks each an icon
+        ▼
+MongoDB Atlas (spots, checkins, walks)  ◀── GET /today reads today's permits live
+        │
+        ├─ POST /checkins   GPS-checked, one per device per spot → shared visitor count
+        ├─ POST /walks      nearby most-filmed blocks, ordered as a loop; Gemini writes the narration
+        └─ GET  /walks/:id/narration   ElevenLabs MP3
+```
 
-## Setup
+## Run it
 
 ```bash
 cd backend
 npm install
-cp .env.example .env   # fill in the values below
+cp .env.example .env     # fill in what you have; everything is optional
+npm run import           # Manhattan since 2012 → data/spots.json (+ MongoDB if configured)
 npm run dev
+npm test
 ```
 
-`GET http://localhost:8080/status?line=L&station=L03` should return JSON.
-`GET http://localhost:8080/health` is a plain liveness check.
+Without `MONGODB_URI` the server uses an in-memory store seeded from `data/spots.json`, and check-ins are lost on restart. Use Atlas for the demo.
 
-## Required environment variables
+## API
 
-| Variable | Required? | Where to get it |
-|---|---|---|
-| `PORT` | No (defaults 8080) | — |
-| `GEMINI_API_KEY` | No, but recommended | [Google AI Studio](https://aistudio.google.com/apikey) — free tier available |
-| `GEMINI_MODEL` | No (defaults `gemini-2.5-flash`) | Check the [current model list](https://ai.google.dev/gemini-api/docs/models) if this 404s — model ids get renamed/retired over time |
-| `MONGODB_URI` | No, but recommended | [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free (M0) cluster connection string |
-| `MONGODB_DB_NAME` | No (defaults `transitTracker`) | — |
+Dates are ISO-8601 without fractional seconds. `deviceID` is the app's anonymous per-install UUID.
 
-Without `GEMINI_API_KEY`, `/status` still works — `delayReasonRaw` just
-returns the raw MTA alert text unsummarized. Without `MONGODB_URI`, it still
-works too — `delayedCountToday` comes back `null` and no history is recorded.
-Nothing about this service requires an MTA API key; the GTFS-realtime and
-alerts feeds it polls are public and keyless.
+| Method | Path | Input | Output |
+|---|---|---|---|
+| GET | `/health` | — | `{ ok, store }` |
+| GET | `/today` | `lat, lon, radius` (m, default 1600) | `[Shoot]`, nearest first |
+| GET | `/collection` | `deviceID` | `[Spot]`: the collectible set, plus any other block this device checked in at |
+| GET | `/spots/:id` | `deviceID` | `Spot` |
+| POST | `/checkins` | `{ spotID, deviceID, lat, lon }` | `201` new / `409` already collected, both with `{ spotID, visitorCount, collectedAt }`. `422 { error: "too_far", distanceMeters }` |
+| POST | `/walks` | `{ lat, lon, minutes: 15\|30\|45, deviceID? }` | `{ id, minutes, stops: [Spot], narrationText }`. `404` if there are fewer than 2 filmed blocks nearby |
+| GET | `/walks/:id/narration` | — | `audio/mpeg`. `503` without an ElevenLabs key; the app falls back to the device voice |
 
-## Known limitations (documented, not silent)
+`Shoot`: `{ id, spotID, block, category, subcategory, startsAt, endsAt, lat, lon }`
 
-- **Feed URLs** (`src/config/feeds.js`) are MTA's current public
-  GTFS-realtime endpoints as of when this was written. Verify against
-  <https://api.mta.info/#/subwayRealTimeFeeds> if `/status` starts returning
-  502s — MTA has moved these before.
-- **Station coordinates** (`src/config/stations.js`) are a small,
-  hand-entered lookup for a handful of L train stops, meant to unblock
-  wiring/testing. Replace with MTA's authoritative static GTFS bundle
-  (stops.txt in <https://rrgtfsfeeds.s3.amazonaws.com/google_transit.zip>)
-  before trusting station names/coordinates beyond local dev.
-- **`vehiclePosition` is an approximation**, not live GPS. NYCT's standard
-  subway GTFS-realtime feed doesn't include continuous vehicle
-  latitude/longitude (that requires parsing MTA's `nyct-subway.proto`
-  extension for current stop sequence/status, which this service doesn't
-  do yet). `vehiclePosition` currently just returns the *upcoming* station's
-  coordinates as a stand-in. The Mac app's primary tracker doesn't need this
-  at all (it's schematic, driven by `nextArrivalMinutes`) — this field only
-  feeds the secondary literal Mapbox view.
-- Only subway lines are covered (`src/config/feeds.js` line → feed-group
-  map); buses aren't handled.
+`Spot`: `{ id, name, crossStreets, neighborhood, symbol, lat, lon, timesFilmed, lastFilmed, lastCategory, visitorCount, collectedAt }`. `symbol` is an SF Symbol name.
 
-## Deploying to DigitalOcean
+## How the pieces work
 
-**App Platform** (simplest): create an app from this `backend/` directory
-(or point at a Dockerfile build), set the environment variables above as
-encrypted app-level secrets, and note the generated public URL.
+- **Spots.** A permit's `parkingheld` field lists the street blocks it holds ("W 20 St between 5 Av and 6 Av, …"). Each block is one spot, identified by a hash of its street and sorted cross streets. `timesFilmed` counts permits that held the block. The neighborhood comes from the permit's ZIP (`src/config/neighborhoods.js`, Manhattan only).
+- **Collectible set.** Each neighborhood's 12 most-filmed blocks, at most one per street (`SPOTS_PER_NEIGHBORHOOD`).
+- **Icons.** During the import, Gemini picks an SF Symbol for each collectible block from a fixed allowlist (`src/services/symbols.js`), based on the street itself, never a show. Anything not on the list (or no `GEMINI_API_KEY`) falls back to an icon for the last shoot's category (tv, film, megaphone…).
+- **Geocoding.** A block's point is the midpoint of its two end intersections. With `NYC_GEOCLIENT_KEY` (free, api-portal.nyc.gov) this uses NYC Geoclient's intersection endpoint; otherwise it uses the keyless GeoSearch, which handles intersections less reliably. **Get the Geoclient key before the demo.**
+- **Check-ins.** The server allows 150 m (`CHECKIN_RADIUS_METERS`); the app requires 100 m and a fix accurate to 65 m. It stores only `{ spotID, deviceID, at }`. Device ids can be spoofed, so treat counts as a fun signal, not proof.
+- **Walks.** The server picks the most-filmed blocks within reach (15 → 3 stops, 30 → 5, 45 → 6) and orders them as a nearest-neighbor loop. Gemini writes the spoken narration from permit facts only, and is told never to name a show. Without `GEMINI_API_KEY`, a template narration is used.
 
-**Droplet + Docker**: `docker build -t transit-backend .` then
-`docker run -d -p 8080:8080 --env-file .env transit-backend`, behind
-whatever reverse proxy/TLS termination you're already running.
+## Deploy (DigitalOcean App Platform)
 
-Either way, give the resulting HTTPS URL to the Mac app's
-`Secrets.xcconfig` as `TRANSIT_BACKEND_BASE_URL`.
+1. Create an app from this repo with source directory `backend/` (the Dockerfile works as-is), or run `npm start` on a Droplet.
+2. Set the env vars from `.env.example`, including `MONGODB_URI` from Atlas. Allow DigitalOcean's egress IPs in Atlas network access.
+3. Run the import once with the same `.env` (locally is fine, as long as it writes to the same Atlas database).
+4. Point your `.tech` domain at the app, then set `CHAIR_BACKEND_BASE_URL` in the app's `Secrets.xcconfig`.
+
+## Known limitations
+
+- The permits don't say which show or movie was filming, and the app never guesses. Title matching is a future improvement.
+- Only Manhattan has neighborhood names; other boroughs group under the borough name.
+- "Today" only shows permits whose first held block can be geocoded.

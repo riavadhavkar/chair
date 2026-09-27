@@ -1,0 +1,11 @@
+// Committed defaults. Override any of these in the gitignored Secrets.xcconfig
+// (copy Secrets.example.xcconfig). In xcconfig files "//" starts a comment,
+// so URLs are written as http:/$()/host.
+
+// Mock data lets the app run with no backend. Set to NO to use the backend below.
+CHAIR_USE_MOCK_DATA = YES
+
+// The simulator can reach the Mac's localhost; a real iPhone needs the deployed URL.
+CHAIR_BACKEND_BASE_URL = http:/$()/localhost:8080
+
+#include? "Secrets.xcconfig"
