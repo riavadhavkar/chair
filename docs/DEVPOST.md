@@ -42,7 +42,9 @@ permits never say which show was filming, so chair never guesses. every fact on 
 - **permits have no titles.** we had to design the whole experience around what the data actually says, instead of the "law & order is filming here" pitch we first imagined.
 - **turning street closures into points.** permits describe blocks as text, not coordinates. parsing and geocoding them reliably took several tries.
 - **honest gps check-ins** that still work on a phone with a noisy gps signal (100 m in the app, a little more slack on the server).
-- [add your own — e.g. xcode build issues, api key setup]
+- **xcode build issues.** swift 6's default main-actor isolation threw warnings on our model classes, and macos's case-insensitive disk made xcode report the project folder as `Chair` in one place and `chair` in another until we renamed everything to lowercase. also, `//` starts a comment in `.xcconfig` files, which silently cut our backend url in half.
+- **api key setup.** juggling keys for gemini, elevenlabs, mongodb atlas and nyc geoclient. the geoclient portal's endpoint path didn't match older docs, and we kept every key on the server so the app itself ships with none.
+- **mongodb atlas network access.** atlas only accepts connections from allowlisted ips, and our public ip changed every time we switched wifi, went to cellular or used a vpn, so we had to keep re-adding it. for a dev database used from many networks, allowing `0.0.0.0/0` is more practical but less secure, and we had to decide that deliberately rather than default into it.
 
 ## accomplishments that we're proud of
 - a shared "who's been here" counter that makes a quiet side street feel like a secret and a famous block feel like a pilgrimage.
