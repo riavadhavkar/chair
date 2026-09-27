@@ -17,6 +17,9 @@ struct WalkView: View {
     @State private var camera: MapCameraPosition = .userLocation(
         fallback: .region(MKCoordinateRegion(center: AppConfig.fallbackCenter, latitudinalMeters: 2000, longitudinalMeters: 2000))
     )
+    // A single-destination route requested from a spot sheet's "walking
+    // directions" button, distinct from the multi-stop planned `walk` loop.
+    @State private var directionsTarget: Spot?
 
     var body: some View {
         Map(position: $camera) {
@@ -25,7 +28,18 @@ struct WalkView: View {
                 MapPolyline(legs[index])
                     .stroke(.red, style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
             }
-            if let walk {
+            if let directionsTarget, let coordinate = directionsTarget.coordinate {
+                Annotation(directionsTarget.name, coordinate: coordinate) {
+                    Button {
+                        selected = SpotRoute(id: directionsTarget.id)
+                    } label: {
+                        SpotBadge(symbol: directionsTarget.badgeSymbol, isCollected: directionsTarget.isCollected, size: 30)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel(directionsTarget.name)
+                }
+                .annotationTitles(.hidden)
+            } else if let walk {
                 ForEach(Array(walk.stops.enumerated()), id: \.element.id) { index, stop in
                     if let coordinate = stop.coordinate {
                         Annotation(stop.name, coordinate: coordinate) {
@@ -46,11 +60,13 @@ struct WalkView: View {
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
         .mapControls { MapUserLocationButton() }
         .safeAreaInset(edge: .top) {
-            HStack {
-                lengthPicker
-                Spacer()
+            if directionsTarget == nil {
+                HStack {
+                    lengthPicker
+                    Spacer()
+                }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
         }
         .safeAreaInset(edge: .bottom) {
             card
@@ -61,6 +77,11 @@ struct WalkView: View {
             SpotSheet(spotID: route.id)
         }
         .onDisappear { narration.stop() }
+        .task(id: model.directionsDestination) {
+            guard let destination = model.directionsDestination else { return }
+            model.directionsDestination = nil
+            await planDirections(to: destination)
+        }
     }
 
     private var lengthPicker: some View {
@@ -82,7 +103,9 @@ struct WalkView: View {
 
     private var card: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if let walk, walk.minutes == minutes {
+            if let directionsTarget {
+                directionsHeader(directionsTarget)
+            } else if let walk, walk.minutes == minutes {
                 plannedHeader(walk)
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -133,6 +156,25 @@ struct WalkView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
+    private func directionsHeader(_ spot: Spot) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("walking to \(spot.name)").font(.title3.bold())
+                Text(spot.subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button {
+                directionsTarget = nil
+                legs = []
+            } label: {
+                Image(systemName: "xmark").frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("cancel directions")
+        }
+    }
+
     private func plannedHeader(_ walk: Walk) -> some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
@@ -172,10 +214,32 @@ struct WalkView: View {
         }
     }
 
+    /// A single-destination walking route from the current location,
+    /// requested via a spot sheet's "walking directions" button.
+    private func planDirections(to spot: Spot) async {
+        guard let destination = spot.coordinate else { return }
+        narration.stop()
+        directionsTarget = spot
+        walk = nil
+        errorText = nil
+        let origin = model.searchCenter
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: origin))
+        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+        request.transportType = .walking
+        if let route = try? await MKDirections(request: request).calculate().routes.first {
+            legs = [route.polyline]
+        } else {
+            legs = [MKPolyline(coordinates: [origin, destination], count: 2)]
+        }
+        withAnimation { camera = .automatic }
+    }
+
     private func plan() async {
         isPlanning = true
         errorText = nil
         narration.stop()
+        directionsTarget = nil
         let origin = model.searchCenter
         do {
             let planned = try await model.service.walk(from: origin, minutes: minutes)

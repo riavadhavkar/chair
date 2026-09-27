@@ -8,7 +8,6 @@ struct SpotSheet: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
 
     @State private var loadError: String?
     @State private var checkInError: String?
@@ -59,9 +58,9 @@ struct SpotSheet: View {
                     checkInSection(spot)
                 }
 
-                if let coordinate = spot.coordinate {
+                if spot.coordinate != nil {
                     Button {
-                        openDirections(to: coordinate)
+                        openDirections(to: spot)
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "figure.walk")
@@ -195,8 +194,10 @@ struct SpotSheet: View {
         isCheckingIn = false
     }
 
-    private func openDirections(to coordinate: CLLocationCoordinate2D) {
-        guard let url = URL(string: "https://maps.apple.com/?daddr=\(coordinate.latitude),\(coordinate.longitude)&dirflg=w") else { return }
-        openURL(url)
+    /// Hands off to the walk tab instead of leaving the app for Apple Maps,
+    /// so directions come from the walk tab's own current-location routing.
+    private func openDirections(to spot: Spot) {
+        dismiss()
+        model.directionsDestination = spot
     }
 }

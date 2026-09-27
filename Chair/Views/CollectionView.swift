@@ -62,21 +62,24 @@ struct CollectionView: View {
         NavigationStack {
             Group {
                 if showsMap {
+                    // No nav bar/title here: a heading above the map just
+                    // eats into it, and the map already carries its own
+                    // context (stats card, recent visits). The toggle
+                    // button floats over the map instead.
                     VisitMapView(spots: model.collection, selected: $selected)
+                        .toolbar(.hidden, for: .navigationBar)
+                        .overlay(alignment: .topTrailing) {
+                            mapToggleButton
+                                .padding(.top, 8)
+                                .padding(.trailing, 16)
+                        }
                 } else {
                     grid
-                }
-            }
-            .navigationTitle(showsMap ? "my map" : "collection")
-            .toolbarTitleDisplayMode(.inlineLarge)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        withAnimation(.snappy) { showsMap.toggle() }
-                    } label: {
-                        Image(systemName: showsMap ? "square.grid.2x2" : "map")
-                    }
-                    .accessibilityLabel(showsMap ? "show collection grid" : "show my map")
+                        .navigationTitle("collection")
+                        .toolbarTitleDisplayMode(.inlineLarge)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarTrailing) { mapToggleButton }
+                        }
                 }
             }
             .task { await model.loadCollection() }
@@ -84,6 +87,18 @@ struct CollectionView: View {
                 SpotSheet(spotID: route.id)
             }
         }
+    }
+
+    private var mapToggleButton: some View {
+        Button {
+            withAnimation(.snappy) { showsMap.toggle() }
+        } label: {
+            Image(systemName: showsMap ? "square.grid.2x2" : "map")
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .glassEffect(.regular, in: .circle)
+        .accessibilityLabel(showsMap ? "show collection grid" : "show my map")
     }
 
     private var grid: some View {

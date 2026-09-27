@@ -31,6 +31,12 @@ final class AppModel {
     private(set) var collectionState: LoadState = .idle
     private var spots: [String: Spot] = [:]
 
+    /// Set by a spot sheet's "walking directions" button to hand a
+    /// destination to the walk tab (which switches to it and plans a
+    /// single-destination route from the current location). Consumed
+    /// (set back to nil) by WalkView once it starts routing.
+    var directionsDestination: Spot?
+
     init(service: ChairService = AppConfig.makeService()) {
         self.service = service
     }

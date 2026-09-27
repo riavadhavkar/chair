@@ -104,6 +104,12 @@ nonisolated struct SpotRoute: Identifiable, Hashable {
     let id: String
 }
 
+/// The three root tabs, so other views (e.g. a spot sheet's "walking
+/// directions" button) can switch tabs programmatically.
+nonisolated enum RootTab: Hashable {
+    case today, walk, collection
+}
+
 nonisolated enum DistanceText {
     static func format(_ meters: CLLocationDistance) -> String {
         Measurement(value: meters, unit: UnitLength.meters)
