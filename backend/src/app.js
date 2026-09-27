@@ -124,6 +124,10 @@ function createApp({
         .filter((s) => s.distance === null || s.distance <= radius)
         .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0) || (a.startsAt ?? "").localeCompare(b.startsAt ?? ""))
         .map(({ distance, ...shoot }) => shoot);
+      console.log(
+        `/today: ${todays.length} permits active today in ${borough}, ` +
+          `${shoots.filter(Boolean).length} placed on the map, ${result.length} within ${radius} m`
+      );
       res.json(result);
     })
   );
