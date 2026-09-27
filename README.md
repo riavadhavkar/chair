@@ -11,7 +11,7 @@
 ## repo
 
 - `chair/`, `chair.xcodeproj`: iphone app (swiftui, mapkit, corelocation, ios 26). no third-party packages, no api keys in the app.
-- `backend/`: node/express api, mongodb atlas, nyc open data import. see [backend/README.md](backend/README.md).
+- `backend/`: node/express api, mongodb atlas, nyc open data import. see [backend/readme.md](backend/README.md).
 - `docs/IOS_APP_BRIEF.md`: the product and design spec.
 
 ## run the app

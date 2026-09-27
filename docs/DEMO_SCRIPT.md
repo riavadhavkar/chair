@@ -1,49 +1,49 @@
 # chair — demo script (≈3:30)
 
-Slides: "chair — divhacks 2026" deck. The same lines are in each slide's speaker notes.
+slides: "chair — divhacks 2026" deck. the same lines are in each slide's speaker notes.
 
-## Before you go on
+## before you go on
 
-- [ ] Phone or simulator charged, volume **up**, Do Not Disturb **on**.
-- [ ] **Mock mode** (safest) or backend running + `CHAIR_USE_MOCK_DATA = NO`. In mock mode, the counts are sample data. If a judge asks, say so.
-- [ ] Simulator: Features ▸ Location ▸ Custom Location → **Grove St `40.7330, -74.0040`** (so check-in unlocks).
-- [ ] Relaunch the app right before presenting. Mock data resets, so Grove St is uncollected again.
-- [ ] Have a **screen recording of the demo** ready as a backup.
+- [ ] phone or simulator charged, volume **up**, do not disturb **on**.
+- [ ] **mock mode** (safest) or backend running + `CHAIR_USE_MOCK_DATA = NO`. in mock mode, the counts are sample data. if a judge asks, say so.
+- [ ] simulator: features ▸ location ▸ custom location → **grove st `40.7330, -74.0040`** (so check-in unlocks).
+- [ ] relaunch the app right before presenting. mock data resets, so grove st is uncollected again.
+- [ ] have a **screen recording of the demo** ready as a backup.
 
-## Script
+## script
 
-| # | Slide | Time | Say |
+| # | slide | time | say |
 |---|---|---|---|
-| 1 | cover | 0:10 | "Hi, I'm [name], and this is **chair**: an iPhone app that turns New York's public film permits into a map of where the city gets filmed, and lets you collect those blocks by actually walking to them." |
-| 2 | pivot | 0:25 | "Quick confession: chair isn't what I started building. On day one I was building a Mac app that lived in the MacBook notch and showed live subway arrivals and delays from the MTA's real-time feeds. **At 3 pm on Saturday I pivoted.** Transit trackers are everywhere, and I wanted something only New York has. I also wanted people to prove they'd actually been somewhere, which a laptop can't do. So I threw out the notch and rebuilt as an iPhone app around the city's film permits." |
-| 3 | problem | 0:15 | "New York is one of the most-filmed cities in the world, but most of us only find out when we walk past the trucks. Every shoot files a public permit with the city, and nobody reads them." |
-| 4 | data | 0:20 | "This is a real permit: a category, a time window, and the street blocks the crew holds. We import every Manhattan permit since 2012 and fold them into one record per block. Permits don't say which show it was, so chair never guesses. Everything on screen is real city data." |
-| 5 | app | 0:15 | "Three tabs. **Today**: every shoot happening right now. **Walk**: a narrated loop through the most-filmed blocks near you. **Collection**: pins you earn by showing up." |
-| 6 | collection | 0:25 | "You collect a block by standing on it. The button only unlocks within 100 meters, and the server checks again. Every block has its own icon, picked by Gemini from the street itself. And it's shared: hundreds of visitors makes it *a classic*, three makes it a *secret spot*." |
-| 7 | my map | 0:15 | "My Map shows a glow around every block you've collected and a trail through your visits. You can replay them one by one. Counts are shared, the trail stays private: we store an anonymous id, the block and the time. Nothing else." |
-| 8 | **live demo** | 0:50 | See the demo steps below. |
-| 9 | how it's built | 0:20 | "A Node importer pulls the permits from NYC Open Data into MongoDB Atlas. An Express API on DigitalOcean serves the SwiftUI app on Apple Maps. Gemini picks the icons and writes the narration, and it's told never to name a show. ElevenLabs voices the walk, with the phone's own voice as a fallback." |
-| 10 | what's next | 0:15 | "Next, the big one is **VR scene replay**: stand on the block and watch the scene that was filmed there. That needs licensing from studios. Closer in: matching titles carefully and with sources, all five boroughs, and an iMessage version." |
-| 11 | close | 0:05 | "New York already writes down where it gets filmed. chair lets you go collect it. Thank you!" |
+| 1 | cover | 0:10 | "hi, i'm [name], and this is **chair**: an iphone app that turns new york's public film permits into a map of where the city gets filmed, and lets you collect those blocks by actually walking to them." |
+| 2 | pivot | 0:25 | "quick confession: chair isn't what i started building. on day one i was building a mac app that lived in the macbook notch and showed live subway arrivals and delays from the mta's real-time feeds. **at 3 pm on saturday i pivoted.** transit trackers are everywhere, and i wanted something only new york has. i also wanted people to prove they'd actually been somewhere, which a laptop can't do. so i threw out the notch and rebuilt as an iphone app around the city's film permits." |
+| 3 | problem | 0:15 | "new york is one of the most-filmed cities in the world, but most of us only find out when we walk past the trucks. every shoot files a public permit with the city, and nobody reads them." |
+| 4 | data | 0:20 | "this is a real permit: a category, a time window, and the street blocks the crew holds. we import every manhattan permit since 2012 and fold them into one record per block. permits don't say which show it was, so chair never guesses. everything on screen is real city data." |
+| 5 | app | 0:15 | "three tabs. **today**: every shoot happening right now. **walk**: a narrated loop through the most-filmed blocks near you. **collection**: pins you earn by showing up." |
+| 6 | collection | 0:25 | "you collect a block by standing on it. the button only unlocks within 100 meters, and the server checks again. every block has its own icon, picked by gemini from the street itself. and it's shared: hundreds of visitors makes it *a classic*, three makes it a *secret spot*." |
+| 7 | my map | 0:15 | "my map shows a glow around every block you've collected and a trail through your visits. you can replay them one by one. counts are shared, the trail stays private: we store an anonymous id, the block and the time. nothing else." |
+| 8 | **live demo** | 0:50 | see the demo steps below. |
+| 9 | how it's built | 0:20 | "a node importer pulls the permits from nyc open data into mongodb atlas. an express api on digitalocean serves the swiftui app on apple maps. gemini picks the icons and writes the narration, and it's told never to name a show. elevenlabs voices the walk, with the phone's own voice as a fallback." |
+| 10 | what's next | 0:15 | "next, the big one is **vr scene replay**: stand on the block and watch the scene that was filmed there. that needs licensing from studios. closer in: matching titles carefully and with sources, all five boroughs, and an imessage version." |
+| 11 | close | 0:05 | "new york already writes down where it gets filmed. chair lets you go collect it. thank you!" |
 
-### Live demo (0:50)
-1. **today**: "Here's what's filming right now." Tap a pin, show the sheet, close it.
-2. **collection** → tap **Grove St** (gray) → **check in here** → *let the spin and sparkles play, pause a beat.*
-3. **Drag the red pin** → it turns in 3D with the holographic sheen.
-4. Tap the map button → **my map** → press **play** on the replay.
+### live demo (0:50)
+1. **today**: "here's what's filming right now." tap a pin, show the sheet, close it.
+2. **collection** → tap **grove st** (gray) → **check in here** → *let the spin and sparkles play, pause a beat.*
+3. **drag the red pin** → it turns in 3d with the holographic sheen.
+4. tap the map button → **my map** → press **play** on the replay.
 5. **walk** → 30 min → **plan my walk** → **listen** for about 5 seconds → stop.
 
-If anything fails, switch to the recording and keep talking: "here's the same flow recorded earlier."
+if anything fails, switch to the recording and keep talking: "here's the same flow recorded earlier."
 
-## Likely questions
+## likely questions
 
-- **"How do you know which show it is?"** "We don't. Permits don't include titles. We decided showing real data beat guessing wrong. Matching titles with sources is on the roadmap."
-- **"Can people fake check-ins?"** "The app gates on GPS accuracy and 100 m, and the server re-checks the distance. Device ids could be spoofed, so treat the count as a fun signal, not proof. Rate-limiting and device attestation would come next."
-- **"Privacy?"** "No accounts, no location history. We store only an anonymous device id, the block and the time."
-- **"Why iPhone and not web?"** "GPS-verified check-ins need a phone in your pocket, and Apple Maps is built in."
-- **"What did Gemini actually do?"** "It picks an SF Symbol for each block from a fixed allowlist, so it can't make up an icon that doesn't exist, and it writes the walk narration from permit facts only."
+- **"how do you know which show it is?"** "we don't. permits don't include titles. we decided showing real data beat guessing wrong. matching titles with sources is on the roadmap."
+- **"can people fake check-ins?"** "the app gates on gps accuracy and 100 m, and the server re-checks the distance. device ids could be spoofed, so treat the count as a fun signal, not proof. rate-limiting and device attestation would come next."
+- **"privacy?"** "no accounts, no location history. we store only an anonymous device id, the block and the time."
+- **"why iphone and not web?"** "gps-verified check-ins need a phone in your pocket, and apple maps is built in."
+- **"what did gemini actually do?"** "it picks an sf symbol for each block from a fixed allowlist, so it can't make up an icon that doesn't exist, and it writes the walk narration from permit facts only."
 
-## Devpost video (≤ 2 min): shot list
+## devpost video (≤ 2 min): shot list
 1. 0:00: the cover slide plus one line of pitch.
 2. 0:10: the pivot slide (5 seconds).
 3. 0:15: screen recording of today → check-in → spin and sparkles.
