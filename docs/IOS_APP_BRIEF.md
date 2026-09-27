@@ -171,12 +171,12 @@ base url comes from `Secrets.xcconfig` (`CHAIR_BACKEND_BASE_URL`). dates are iso
 
 | method | path | body / query | returns |
 |---|---|---|---|
-| get | `/today` | `lat, lon, radius` | `[Shoot]` |
-| get | `/collection` | `deviceID` | `[Spot]` |
-| get | `/spots/:id` | `deviceID` | `Spot` |
-| post | `/checkins` | `{ spotID, deviceID, lat, lon }` | `CheckInResult` (201 new, 409 already collected with the same body, 422 `{ error, distanceMeters }` = too far) |
-| post | `/walks` | `{ lat, lon, minutes, deviceID }` | `Walk` (404 = not enough filmed blocks nearby) |
-| get | `/walks/:id/narration` | — | `audio/mpeg` |
+| GET | `/today` | `lat, lon, radius` | `[Shoot]` |
+| GET | `/collection` | `deviceID` | `[Spot]` |
+| GET | `/spots/:id` | `deviceID` | `Spot` |
+| POST | `/checkins` | `{ spotID, deviceID, lat, lon }` | `CheckInResult` (201 new, 409 already collected with the same body, 422 `{ error, distanceMeters }` = too far) |
+| POST | `/walks` | `{ lat, lon, minutes, deviceID }` | `Walk` (404 = not enough filmed blocks nearby) |
+| GET | `/walks/:id/narration` | — | `audio/mpeg` |
 
 all api keys (gemini, elevenlabs, mongodb) stay on the server. the app holds none.
 

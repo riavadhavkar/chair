@@ -35,13 +35,13 @@ dates are iso-8601 without fractional seconds. `deviceID` is the app's anonymous
 
 | method | path | input | output |
 |---|---|---|---|
-| get | `/health` | — | `{ ok, store }` |
-| get | `/today` | `lat, lon, radius` (m, default 1600) | `[Shoot]`, nearest first |
-| get | `/collection` | `deviceID` | `[Spot]`: the collectible set, plus any other block this device checked in at |
-| get | `/spots/:id` | `deviceID` | `Spot` |
-| post | `/checkins` | `{ spotID, deviceID, lat, lon }` | `201` new / `409` already collected, both with `{ spotID, visitorCount, collectedAt }`. `422 { error: "too_far", distanceMeters }` |
-| post | `/walks` | `{ lat, lon, minutes: 15\|30\|45, deviceID? }` | `{ id, minutes, stops: [Spot], narrationText }`. `404` if there are fewer than 2 filmed blocks nearby |
-| get | `/walks/:id/narration` | — | `audio/mpeg`. `503` without an elevenlabs key; the app falls back to the device voice |
+| GET | `/health` | — | `{ ok, store }` |
+| GET | `/today` | `lat, lon, radius` (m, default 1600) | `[Shoot]`, nearest first |
+| GET | `/collection` | `deviceID` | `[Spot]`: the collectible set, plus any other block this device checked in at |
+| GET | `/spots/:id` | `deviceID` | `Spot` |
+| POST | `/checkins` | `{ spotID, deviceID, lat, lon }` | `201` new / `409` already collected, both with `{ spotID, visitorCount, collectedAt }`. `422 { error: "too_far", distanceMeters }` |
+| POST | `/walks` | `{ lat, lon, minutes: 15\|30\|45, deviceID? }` | `{ id, minutes, stops: [Spot], narrationText }`. `404` if there are fewer than 2 filmed blocks nearby |
+| GET | `/walks/:id/narration` | — | `audio/mpeg`. `503` without an elevenlabs key; the app falls back to the device voice |
 
 `Shoot`: `{ id, spotID, block, category, subcategory, startsAt, endsAt, lat, lon }`
 
