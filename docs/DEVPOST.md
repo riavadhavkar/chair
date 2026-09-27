@@ -73,7 +73,7 @@ swift, swiftui, mapkit, corelocation, avfoundation, ios, xcode, node.js, express
 - [https://yourdomain.tech]: only if you deployed it
 
 ## Image gallery (3:2, ≤5 MB each)
-1. App icon on the red background (`Chair/Assets.xcassets/AppIcon.appiconset/AppIcon.png`)
+1. App icon on the red background (`chair/Assets.xcassets/AppIcon.appiconset/AppIcon.png`)
 2. Screenshots: today map, collection grid, spot sheet mid-spin, holographic pin, my map, walk
 3. The "how it's built" slide
 4. The "pivot" slide

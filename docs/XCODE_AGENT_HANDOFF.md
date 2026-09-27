@@ -1,10 +1,10 @@
 # chair — handoff to the Xcode agent
 
-All features are implemented in `Chair/` and `backend/`, but **the Swift has never been compiled** because it was written without Xcode. Your job is to get it building, run it, and tune how it looks and feels. Read `CLAUDE.md` first.
+All features are implemented in `chair/` and `backend/`, but **the Swift has never been compiled** because it was written without Xcode. Your job is to get it building, run it, and tune how it looks and feels. Read `CLAUDE.md` first.
 
 ## 1. Build
 
-- Open `Chair.xcodeproj` (iOS 26, target `Chair`). Set the signing team. The project file was written by hand, so if Xcode offers to update project settings, accept.
+- Open `chair.xcodeproj` (iOS 26, target `chair`). Set the signing team. The project file was written by hand, so if Xcode offers to update project settings, accept.
 - Fix compile errors with the smallest change that works, and keep the behavior. The APIs most likely to need a tweak:
   - `keyframeAnimator` + `KeyframeTrack` in `CollectibleBadge` and `SparkleBurst` (`Views/Components/SpotBadge.swift`)
   - `.gesture(_:including:)` and the double `rotation3DEffect` in `HolographicBadge`

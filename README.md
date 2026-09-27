@@ -10,13 +10,13 @@
 
 ## Repo
 
-- `Chair/`, `Chair.xcodeproj`: iPhone app (SwiftUI, MapKit, CoreLocation, iOS 26). No third-party packages, no API keys in the app.
+- `chair/`, `chair.xcodeproj`: iPhone app (SwiftUI, MapKit, CoreLocation, iOS 26). No third-party packages, no API keys in the app.
 - `backend/`: Node/Express API, MongoDB Atlas, NYC Open Data import. See [backend/README.md](backend/README.md).
 - `docs/IOS_APP_BRIEF.md`: the product and design spec.
 
 ## Run the app
 
-1. Open `Chair.xcodeproj` in Xcode 26, pick your team under Signing & Capabilities, and run on an iPhone or the simulator.
+1. Open `chair.xcodeproj` in Xcode 26, pick your team under Signing & Capabilities, and run on an iPhone or the simulator.
 2. It starts on **mock data** (`CHAIR_USE_MOCK_DATA = YES` in `Chair.xcconfig`), so every screen works without the backend.
 3. To try a check-in in the simulator, go to Features ▸ Location ▸ Custom Location and enter a mock spot, e.g. Grove St: `40.7330, -74.0040`.
 4. To use the real backend, copy `Secrets.example.xcconfig` to `Secrets.xcconfig` and set `CHAIR_USE_MOCK_DATA = NO` and `CHAIR_BACKEND_BASE_URL` (write `https:/$()/host`, since `//` starts a comment in xcconfig files). The simulator can use `http:/$()/localhost:8080`; a real iPhone needs the deployed URL.

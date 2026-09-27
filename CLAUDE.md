@@ -6,7 +6,7 @@ An iPhone app that maps NYC film/TV shoots from the city's public film permits. 
 
 ## Layout
 
-- `Chair/`: the app. Xcode uses a synchronized folder, so new `.swift` files need no project edits.
+- `chair/`: the app. Xcode uses a synchronized folder, so new `.swift` files need no project edits.
   - `Models/Models.swift`: `Shoot`, `Spot` (with the `vibe` label), `CheckInResult`, `Walk`
   - `Models/AppModel.swift`: shared observable state for all tabs, plus the check-in gate (`availability(for:)`)
   - `Services/`: `ChairService` protocol; `MockChairService` (canvas data) and `RemoteChairService` (HTTP); `LocationModel` (CLLocationUpdate); `NarrationPlayer` (ElevenLabs MP3 with a device-voice fallback)

@@ -1,6 +1,6 @@
 # chair — iPhone app build brief
 
-> **Status:** implemented in `Chair/` and `backend/`. This brief is the spec, and the code follows it.
+> **Status:** implemented in `chair/` and `backend/`. This brief is the spec, and the code follows it.
 
 chair shows where movies and TV are filming in NYC today, based on the city's public film permits. It also turns the most-filmed blocks into spots people can collect by physically visiting them. Every spot shows how many people have been there, so a visit feels either validated ("a classic") or like a find ("secret spot").
 
@@ -11,7 +11,7 @@ The design reference is the **"chair iPhone app"** canvas (https://claude.ai/art
 ## Platform
 
 - **iOS 26, iPhone only. SwiftUI, MapKit, CoreLocation, AVFoundation.** No third-party packages, no UIKit views unless SwiftUI has no equivalent.
-- Create a **new iOS App project** in this repo (e.g. `Chair/`). The old macOS notch app in `sair/` is retired, so delete it once the new target builds.
+- Create a **new iOS App project** in this repo (e.g. `chair/`). The old macOS notch app in `sair/` is retired, so delete it once the new target builds.
 - Networking: `URLSession` + `async/await` + `Codable`.
 - `Info.plist`: `NSLocationWhenInUseUsageDescription` = "chair uses your location to show nearby shoots and to confirm you're at a spot when you check in."
 - No accounts. Each install gets an anonymous id: a `UUID` created on first launch and stored in `UserDefaults`.
