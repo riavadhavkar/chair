@@ -5,9 +5,11 @@ slides: "chair — divhacks 2026" deck. the same lines are in each slide's speak
 ## before you go on
 
 - [ ] phone or simulator charged, volume **up**, do not disturb **on**.
-- [ ] **mock mode** (safest) or backend running + `CHAIR_USE_MOCK_DATA = NO`. in mock mode, the counts are sample data. if a judge asks, say so.
-- [ ] simulator: features ▸ location ▸ custom location → **grove st `40.7330, -74.0040`** (so check-in unlocks).
-- [ ] relaunch the app right before presenting. mock data resets, so grove st is uncollected again.
+- [ ] **real data:** backend running (`npm start`, with `MONGODB_URI` set so check-ins survive a restart) and `CHAIR_USE_MOCK_DATA = NO` in `Secrets.xcconfig`, rebuilt with ⌘R.
+- [ ] **pick your check-in block:** run `curl -s localhost:8080/collection | head -c 600` and choose one block. note its `name`, `lat` and `lon`.
+- [ ] simulator: features ▸ location ▸ custom location → that block's **`lat, lon`** (so check-in unlocks).
+- [ ] **seed my map:** check in at 2 other blocks beforehand (set the location to each, then check in), so the replay has something to play. those are real check-ins, so their counts are honest.
+- [ ] expect **today** to be empty on a weekend. that's the point of step 1 below.
 - [ ] have a **screen recording of the demo** ready as a backup.
 
 ## script
@@ -27,13 +29,13 @@ slides: "chair — divhacks 2026" deck. the same lines are in each slide's speak
 | 11 | close | 0:05 | "new york already writes down where it gets filmed. chair lets you go collect it. thank you!" |
 
 ### live demo (0:50)
-1. **today**: "here's what's filming right now." tap a pin, show the sheet, close it.
-2. **collection** → tap **grove st** (gray) → **check in here** → *let the spin and sparkles play, pause a beat.*
+1. **today** shows *"nothing filming near you today."* say: "this is live city data, and right now it's honest: it's the weekend, and the city publishes permits with a lag. on a weekday this map fills up with shoots. but the permit history is where it gets fun." → go to collection.
+2. **collection** → tap **[your block]** (gray) → **check in here** → *let the spin and sparkles play, pause a beat.* its counter shows real visits, probably "be the first here" or a small number, and that's the secret-spot feeling.
 3. **drag the red pin** → it turns in 3d with the holographic sheen.
 4. tap the map button → **my map** → press **play** on the replay.
 5. **walk** → 30 min → **plan my walk** → **listen** for about 5 seconds → stop.
 
-if anything fails, switch to the recording and keep talking: "here's the same flow recorded earlier."
+if anything fails, switch to the recording and keep talking: "here's the same flow recorded earlier." if the backend itself is down, flip `CHAIR_USE_MOCK_DATA = YES`, rebuild, and demo on sample data (say so if asked).
 
 ## likely questions
 
